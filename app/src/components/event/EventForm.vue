@@ -69,8 +69,8 @@ watch(search, val => {
 })
 
 watch(() => search.value.venue, val => { val && val !== item.value.venue?.name && debounce(() => sendRequest('Venue')) })
-watch(() => search.value.user, val => { val && item.value.artists?.some(_ => _.username === val) && debounce(() => sendRequest('User')) })
-watch(() => search.value.schedule, val => { val && item.value.schedules?.some(_ => date.format(_.date, 'Y-m-d') === val) && debounce(() => sendRequest('Schedule')) })
+watch(() => search.value.user, val => { val && !item.value.artists?.some(_ => _.username === val) && debounce(() => sendRequest('User')) })
+watch(() => search.value.schedule, val => { val && !item.value.schedules?.some(_ => date.format(_.date, 'Y-m-d') === val) && debounce(() => sendRequest('Schedule')) })
 // TODO use vue-validate and use assertions in Entities
 </script>
 

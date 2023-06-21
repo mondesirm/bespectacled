@@ -1,50 +1,77 @@
-<script setup>
-import { computed, onBeforeMount, onMounted, ref } from 'vue'
+<script setup lang="ts">
+import { computed, onBeforeMount, ref, watch } from 'vue'
 import { useTheme } from 'vuetify'
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 
-import UserService from '@/services/user.service'
-import EventService from '@/services/event.service'
-import VenueService from '@/services/venue.service'
-import { useAuthStore, useEventListStore, useUtilsStore } from '@/store'
+import { useAuthStore, useEventListStore, useScheduleListStore, useUserListStore, useUtilsStore, useVenueListStore } from '@/store'
 
 const $theme = useTheme()
 const $router = useRouter()
 const $store = useAuthStore()
 const $utilsStore = useUtilsStore()
-const $eventListStore = useEventListStore()
 
+const $userListStore = useUserListStore()
+const { items: users, totalItems: totalUsers, error: userError, isLoading: userIsLoading } = storeToRefs($userListStore)
+
+const $eventListStore = useEventListStore()
+const { items: events, totalItems: totalEvents, error: eventError, isLoading: eventIsLoading } = storeToRefs($eventListStore)
+
+const $venueListStore = useVenueListStore()
+const { items: venues, totalItems: totalVenues, error: venueError, isLoading: venueIsLoading } = storeToRefs($venueListStore)
+
+const $scheduleListStore = useScheduleListStore()
+const { items: schedules, totalItems: totalSchedules, error: scheduleError, isLoading: scheduleIsLoading } = storeToRefs($scheduleListStore)
+
+const page = ref('1')
+const order = ref({})
 const search = ref('')
 const drawer = ref(false)
 const user = computed(() => $store.user)
 
-const categories = ref([
-	{ name: 'Users', icon: 'fa fa-user-tie', to: '/users/', key: 'username', children: [] },
-	{ name: 'Events', icon: 'fa fa-star', to: '/events/', key: 'title', children: [] },
-	{ name: 'Venues', icon: 'fa fa-location-dot', to: '/venues/', key: 'name', children: [] },
-	{ name: 'Schedules', icon: 'fa fa-calendar-days', to: '/schedule/', children: [] }
+const categories = computed(() => [
+	{ name: 'Users', icon: 'fa fa-user-tie', to: '/users', key: 'username', children: users.value as [] },
+	{ name: 'Events', icon: 'fa fa-star', to: '/events', key: 'title', children: events.value as [] },
+	{ name: 'Venues', icon: 'fa fa-location-dot', to: '/venues', key: 'name', children: venues.value as [] },
+	{ name: 'Schedules', icon: 'fa fa-calendar-days', to: '/schedule', key: 'date', children: schedules.value as [] }
 ])
 
-// onBeforeMount(() => $theme.global.name.value = $store.state.theme.dark ? 'dark' : 'light')
-onBeforeMount(() => $theme.global.name.value = $utilsStore.dark ? 'dark' : 'light')
+const sendRequest = async () => {
+	await $userListStore.getItems({ page: page.value, order: order.value })
+	await $eventListStore.getItems({ page: page.value, order: order.value })
+	await $venueListStore.getItems({ page: page.value, order: order.value })
+	await $scheduleListStore.getItems({ page: page.value, order: order.value })
+}
 
-onMounted(async () => {
-	const { data: users } = await UserService.all()
-	categories.value.find(c => c.name === 'Users').children = users
-
-	// const { data: events } = await $eventListStore.getItems()
-	const { data: events } = await EventService.all()
-	categories.value.find(c => c.name === 'Events').children = events
-
-	const { data: venues } = await VenueService.all()
-	categories.value.find(c => c.name === 'Venues').children = venues
-	// console.log(events)
-})
+const debounce = (func: () => void, delay = 500) => {
+	const t = setTimeout(() => func(), delay)
+	return () => clearTimeout(t)
+}
 
 const filteredCategories = computed(() => {
-	return categories.value.filter(c => c?.children?.length > 0).map(c => {
-		return { ...c, children: c.children.filter(child => child[c.key].toLowerCase().includes(search.value.toLowerCase())) }
+	const filtered = categories.value.filter(c => c.children.length > 0).map(c => {
+		return { ...c, children: c.children.filter((child: any) => child[c.key].toLowerCase().includes(search.value.toLowerCase())) as any[] }
 	})
+
+	// Merge schedules with the same date
+	const formatted = filtered.map(c => {
+		if (c.name === 'Schedules') {
+			const dates = c.children.map((child: any) => child[c.key])
+			const uniqueDates = [...new Set(dates)]
+			const children = uniqueDates.map((date: any) => {
+				const schedules = c.children.filter((child: any) => child[c.key] === date)
+				delete schedules[0]?.event
+				delete schedules[0]?.['@id']
+				return { ...schedules[0], schedules }
+			})
+
+			return { ...c, children }
+		}
+
+		return c
+	})
+
+	return formatted
 })
 
 const toggle = () => {
@@ -59,6 +86,10 @@ const resendVerificationEmail = () => {
 	// TODO $store.dispatch('auth/resendVerificationEmail')
 	alert('This feature has not been implemented yet.')
 }
+
+// onBeforeMount(() => $theme.global.name.value = $utilsStore.dark ? 'dark' : 'light')
+
+watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 </script>
 
 <template>
@@ -93,8 +124,8 @@ const resendVerificationEmail = () => {
 							<v-card-text>
 								<v-list v-if="search" lines="one" density="compact">
 									<template v-for="{ name, icon, to, key, children } in filteredCategories" :key="name">
-										<div class="text-high-emphasis font-weight-black text-uppercase" @click="$router.push('/admin' + to)">Manage {{ name }}</div>
-										<v-list-item :prepend-icon="icon" v-for="child in children" :key="child" :title="child[key]" @click="$router.push('/admin' + to + child.id); isActive.value = false" />
+										<p><router-link class="text-high-emphasis font-weight-black text-uppercase" :to="'/admin' + to">Manage {{ name }}</router-link></p>
+										<v-list-item :prepend-icon="icon" v-for="child in children" :key="child" :title="child[key]" @click="$router.push('/admin' + to + '/show/' + child?.id); isActive.value = false" />
 									</template>
 								</v-list>
 
@@ -147,7 +178,7 @@ const resendVerificationEmail = () => {
 		</v-navigation-drawer>
 
 		<v-main>
-			<v-banner v-if="user && user?.status === 0" class="align-center" lines="one" icon="$info" color="info" sticky>
+			<v-banner v-if="user && user?.roles.includes('ROLE_UNVERIFIED')" class="align-center" lines="one" icon="$info" color="info" sticky>
 				<v-banner-text>
 					You need to verify your email address before you can continue.
 				</v-banner-text>

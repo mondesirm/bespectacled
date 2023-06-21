@@ -1,30 +1,41 @@
-<script setup>
+<script setup lang="ts">
 import { computed, onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
 import { useTheme } from 'vuetify'
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 
-import { useAuthStore, useUtilsStore } from '@/store'
 import Carousel from '@/components/custom/Carousel.vue'
-
-import UserService from '@/services/user.service'
-import EventService from '@/services/event.service'
-import VenueService from '@/services/venue.service'
-import { storeToRefs } from 'pinia'
+import { useAuthStore, useEventListStore, useScheduleListStore, useUserListStore, useUtilsStore, useVenueListStore } from '@/store'
 
 const $theme = useTheme()
 const $router = useRouter()
-const $store = useAuthStore()
+
 const $utilsStore = useUtilsStore()
 
-const { user, error } = storeToRefs($store)
+const $store = useAuthStore()
+const { user } = storeToRefs($store)
+
+const $userListStore = useUserListStore()
+const { items: users, totalItems: totalUsers, error: userError, isLoading: userIsLoading } = storeToRefs($userListStore)
+
+const $eventListStore = useEventListStore()
+const { items: events, totalItems: totalEvents, error: eventError, isLoading: eventIsLoading } = storeToRefs($eventListStore)
+
+const $venueListStore = useVenueListStore()
+const { items: venues, totalItems: totalVenues, error: venueError, isLoading: venueIsLoading } = storeToRefs($venueListStore)
+
+const $scheduleListStore = useScheduleListStore()
+const { items: schedules, totalItems: totalSchedules, error: scheduleError, isLoading: scheduleIsLoading } = storeToRefs($scheduleListStore)
 
 const tab = ref(null)
+const page = ref('1')
+const order = ref({})
 const search = ref('')
 const dialog = ref(false)
 const drawer = ref(false)
 const scrolled = ref(false)
 
-user.value = JSON.parse(localStorage.getItem('user') || 'null')
+// user.value = JSON.parse(localStorage.getItem('user') || 'null')
 
 const icons = {
 	broadway: 'fa fa-mask',
@@ -32,22 +43,41 @@ const icons = {
 	other: 'fa fa-question'
 }
 
-const backgroundImage = {
-	events: 'src/assets/stadium.jpeg'
-}[$router.currentRoute.value.name]
+// const backgroundImage = {
+// 	events: 'src/assets/stadium.jpeg'
+// }[$router.currentRoute.value.name]
 
-const categories = ref([
-	{ name: 'Artists', icon: 'fa fa-user', to: '/artists', key: 'username', children: [] },
-	{ name: 'Events', icon: 'fa fa-star', to: '/events', key: 'title', children: [] },
-	{ name: 'Venues', icon: 'fa fa-location-dot', to: '/venues', key: 'name', children: [] },
-	{ name: 'Calendar', icon: 'fa fa-calendar-days', to: '/calendar' },
-	{ name: 'Ticketing', icon: 'fa fa-ticket', to: '/ticketing' }
+const categories = computed(() => [
+	{ name: 'Users', icon: 'fa fa-user-tie', to: '/users/', key: 'username', children: users.value as [] },
+	{ name: 'Events', icon: 'fa fa-star', to: '/events/', key: 'title', children: events.value as [] },
+	{ name: 'Venues', icon: 'fa fa-location-dot', to: '/venues/', key: 'name', children: venues.value as [] },
+	{ name: 'Schedules', icon: 'fa fa-calendar-days', to: '/schedule/', key: 'date', children: schedules.value as [] }
 ])
 
 const filteredCategories = computed(() => {
-	return categories.value.filter(c => c?.children?.length > 0).map(c => {
-		return { ...c, children: c.children.filter(child => child[c.key].toLowerCase().includes(search.value.toLowerCase())) }
+	const filtered = categories.value.filter(c => c.children.length > 0).map(c => {
+		return { ...c, children: c.children.filter((child: any) => child[c.key].toLowerCase().includes(search.value.toLowerCase())) as any[] }
 	})
+
+	// Merge schedules with the same date
+	const formatted = filtered.map(c => {
+		if (c.name === 'Schedules') {
+			const dates = c.children.map((child: any) => child[c.key])
+			const uniqueDates = [...new Set(dates)]
+			const children = uniqueDates.map((date: any) => {
+				const schedules = c.children.filter((child: any) => child[c.key] === date)
+				delete schedules[0]?.event
+				delete schedules[0]?.['@id']
+				return { ...schedules[0], schedules }
+			})
+
+			return { ...c, children }
+		}
+
+		return c
+	})
+
+	return formatted
 })
 
 const sendRequest = async () => {
@@ -61,7 +91,7 @@ const sendRequest = async () => {
 	])
 }
 
-const registerShortcuts = e => {
+const registerShortcuts = (e: KeyboardEvent) => {
 	if (e.key === '/') dialog.value = true
 	if (e.ctrlKey && e.altKey && e.key === 't') toggle()
 }
@@ -80,28 +110,15 @@ const resendVerificationEmail = () => {
 
 onBeforeMount(() => $theme.global.name.value = $utilsStore.dark ? 'dark' : 'light')
 
-onMounted(async () => {
-	// Register shortcuts
-	window.addEventListener('keydown', registerShortcuts)
-
-	// Load data for the search bar
-	const { data: artists } = await UserService.artists()
-	categories.value.find(c => c.name === 'Artists').children = artists
-
-	const { data: events } = await EventService.all()
-	categories.value.find(c => c.name === 'Events').children = events
-
-	const { data: venues } = await VenueService.all()
-	categories.value.find(c => c.name === 'Venues').children = venues
-})
-
+// Register shortcuts
+onMounted(() => window.addEventListener('keydown', registerShortcuts))
 onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
 </script>
 
 <template>
 	<v-app :dark="$utilsStore.dark">
 		<!-- <v-parallax style="background-size: cover;" :src="backgroundImage"> -->
-			<v-app-bar class="ps-4" :height="scrolled || $router.currentRoute.value.name !== 'home' ? undefined : 100" :elevation="scrolled ? 4 : 0"  :color="scrolled ? 'primary' : 'transparent'" density="compact" v-scroll="e => scrolled = e.target.scrollingElement.scrollTop > 50" app flat>
+			<v-app-bar class="ps-4" :height="scrolled || $router.currentRoute.value.name !== 'home' ? undefined : 100" :elevation="scrolled ? 4 : 0"  :color="scrolled ? 'primary' : 'transparent'" density="compact" v-scroll="(e: any) => scrolled = e.target.scrollingElement.scrollTop > 50" app flat>
 				<v-progress-linear class="position-fixed" :active="$utilsStore.isLoading" color="white" indeterminate />
 
 				<template #prepend>
@@ -141,7 +158,7 @@ onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
 								<v-card-text>
 									<v-list v-if="search" lines="one" density="compact">
 										<template v-for="{ name, icon, to, key, children } in filteredCategories" :key="name">
-											<div class="text-high-emphasis font-weight-black text-uppercase" @click="$router.push(to)">{{ name }}</div>
+											<router-link class="text-high-emphasis font-weight-black text-uppercase" :to="to">{{ name }}</router-link>
 											<v-list-item v-for="child in children" :key="child" :prepend-icon="icon" :title="child[key]" @click="$router.push(to + '/' + child.id); isActive.value = false" />
 										</template>
 									</v-list>
@@ -232,7 +249,7 @@ onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
 			</v-snackbar>
 
 			<v-main style="--v-layout-top: 48px;">
-				<v-banner v-if="user && user?.status === 0" class="align-center" icon="$info" color="info" lines="one" sticky>
+				<v-banner v-if="user && user?.roles.includes('ROLE_UNVERIFIED')" class="align-center" icon="$info" color="info" lines="one" sticky>
 					<v-banner-text>
 						You need to verify your email address before you can continue.
 					</v-banner-text>
