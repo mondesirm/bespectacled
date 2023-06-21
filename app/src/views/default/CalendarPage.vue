@@ -2,14 +2,14 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
-import { useAuthStore, useThemeStore } from '@/store'
+import { useAuthStore, useUtilsStore } from '@/store'
 
 import EventService from '../../services/event.service'
 import ScheduleService from '../../services/schedule.service'
 
 const $store = useStore()
 const $router = useRouter()
-const $themeStore = useThemeStore()
+const $utilsStore = useUtilsStore()
 
 const query = $router.currentRoute.value.query
 const parallax = new URL('@/assets/stadium.jpeg', import.meta.url).href
@@ -109,7 +109,7 @@ const randomColor = title => {
 	</v-parallax>
 
 	<v-row>
-		<v-col cols="4">
+		<v-col md="3">
 			<v-sheet rounded class="fill-height">
 				<v-card-text>
 					<!-- <div v-if="calendar" class="text-overline">{{ calendar.firstPage.title }}</div> -->
@@ -133,14 +133,14 @@ const randomColor = title => {
 						v-model="options.range"
 						mode="date"
 						color="purple"
-						:is-dark="$themeStore.dark"
+						:is-dark="$utilsStore.dark"
 						:masks="options.masks"
 						is-range
 						:select-attribute="attr()"
 						:drag-attribute="attr()"
 						@drag="options.range = $event"
-					>	
-						<template v-slot:day-popover="{ format }">
+					>
+						<template #day-popover="{ format }">
 							{{ format(options.range.start, 'MMM D') }}
 							-
 							{{ format(options.range.end, 'MMM D') }}
@@ -175,14 +175,14 @@ const randomColor = title => {
 		<v-col>
 			<v-calendar
 				ref="calendar"
-				class="fill-height"
+				class="d-block w-auto fill-height bg-surface"
 				color="purple"
 				:rows="options.rows"
 				:columns="options.columns"
 				:min-date="options.range.start"
 				:max-date="options.range.end"
 				is-expanded
-				:is-dark="$themeStore.dark"
+				:is-dark="$utilsStore.dark"
 				:attributes="attrs"
 				nav-visibility="hover"
 			>
@@ -213,14 +213,14 @@ const randomColor = title => {
 											transition="scale-transition"
 											:disabled="Date.now() > new Date(attr.customData.day.date + 'T' + time).getTime()"
 										>
-											<template v-slot:activator="{ props }">
+											<template #activator="{ props }">
 												<v-chip v-bind="props" pill link :text="time" :disabled="Date.now() > new Date(attr.customData.day.date + 'T' + time).getTime()" />
 											</template>
 
 											<v-card width="max-content">
 												<v-list bg-color="black">
 													<v-list-item :title="time" :subtitle="format(day.date, 'WWWW, MMMM D, YYYY')" prepend-icon="fa fa-clock">
-														<template v-slot:append>
+														<template #append>
 															<v-list-item-action>
 																<v-btn icon="fa fa-times-circle" variant="text" @click="menus[attr.customData.day.id][i] = false" />
 															</v-list-item-action>

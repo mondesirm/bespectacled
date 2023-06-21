@@ -14,7 +14,7 @@ class StripeService
         $this->secretKey = $secretKey;
     }
 
-    public function createTicket(string $name, string $description): StripeProduct
+    public function createEvent(string $name, string $description): StripeProduct
     {
         Stripe::setApiKey($this->secretKey);
         return StripeProduct::create([
@@ -25,7 +25,7 @@ class StripeService
         ]);
     }
 
-    public function updateTicket(string $ticketId, string $name, string $description): StripeProduct
+    public function updateEvent(string $ticketId, string $name, string $description): StripeProduct
     {
         Stripe::setApiKey($this->secretKey);
         $stripeProduct = StripeProduct::retrieve($ticketId);
@@ -36,7 +36,7 @@ class StripeService
     }
 
 
-    public function deleteTicket(string $ticketId): StripeProduct
+    public function deleteEvent(string $ticketId): StripeProduct
     {
         Stripe::setApiKey($this->secretKey);
         $stripeProduct = StripeProduct::retrieve($ticketId);

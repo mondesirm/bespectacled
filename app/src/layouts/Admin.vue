@@ -6,13 +6,12 @@ import { useRouter } from 'vue-router'
 import UserService from '@/services/user.service'
 import EventService from '@/services/event.service'
 import VenueService from '@/services/venue.service'
-import { useAuthStore, useThemeStore } from '@/store'
-import { useEventListStore } from '@/store/event/list'
+import { useAuthStore, useEventListStore, useUtilsStore } from '@/store'
 
 const $theme = useTheme()
 const $router = useRouter()
 const $store = useAuthStore()
-const $themeStore = useThemeStore()
+const $utilsStore = useUtilsStore()
 const $eventListStore = useEventListStore()
 
 const search = ref('')
@@ -23,15 +22,15 @@ const categories = ref([
 	{ name: 'Users', icon: 'fa fa-user-tie', to: '/users/', key: 'username', children: [] },
 	{ name: 'Events', icon: 'fa fa-star', to: '/events/', key: 'title', children: [] },
 	{ name: 'Venues', icon: 'fa fa-location-dot', to: '/venues/', key: 'name', children: [] },
-	{ name: 'Schedules', icon: 'fa fa-calendar-days', to: '/schedule/' }
+	{ name: 'Schedules', icon: 'fa fa-calendar-days', to: '/schedule/', children: [] }
 ])
 
 // onBeforeMount(() => $theme.global.name.value = $store.state.theme.dark ? 'dark' : 'light')
-onBeforeMount(() => $theme.global.name.value = $themeStore.dark ? 'dark' : 'light')
+onBeforeMount(() => $theme.global.name.value = $utilsStore.dark ? 'dark' : 'light')
 
 onMounted(async () => {
 	const { data: users } = await UserService.all()
-	categories.value.find(c => c.name === 'Artists').children = users
+	categories.value.find(c => c.name === 'Users').children = users
 
 	// const { data: events } = await $eventListStore.getItems()
 	const { data: events } = await EventService.all()
@@ -39,7 +38,7 @@ onMounted(async () => {
 
 	const { data: venues } = await VenueService.all()
 	categories.value.find(c => c.name === 'Venues').children = venues
-	console.log(events)
+	// console.log(events)
 })
 
 const filteredCategories = computed(() => {
@@ -49,9 +48,9 @@ const filteredCategories = computed(() => {
 })
 
 const toggle = () => {
-	$themeStore.toggle()
+	$utilsStore.toggle()
 	// $theme.global.name.value = $store.state.theme.dark ? 'dark' : 'light'
-	$theme.global.name.value = $themeStore.dark ? 'dark' : 'light'
+	$theme.global.name.value = $utilsStore.dark ? 'dark' : 'light'
 }
 
 const logout = () => $store.logout()
@@ -63,18 +62,18 @@ const resendVerificationEmail = () => {
 </script>
 
 <template>
-	<v-app dark>
+	<v-app :dark="$utilsStore.dark">
 		<v-app-bar color="pink-accent-4" density="compact" app>
-			<template v-slot:prepend>
+			<template #prepend>
 				<v-app-bar-nav-icon @click.stop="drawer = !drawer" />
 				<v-btn prepend-icon="fa fa-glasses" color="white" @click="$router.push('/admin')">BeSpectacled Admin</v-btn>
 
 				<v-dialog scrollable>
-					<template v-slot:activator="{ props }">
+					<template #activator="{ props }">
 						<v-btn prepend-icon="fa fa-search" v-bind="props">Search</v-btn>
 					</template>
 
-					<template v-slot:default="{ isActive }">
+					<template #default="{ isActive }">
 						<v-card>
 							<v-toolbar color="primary" title="Search BeSpectacled">
 								<v-btn icon="fa fa-times" @click="isActive.value = false" />
@@ -122,7 +121,7 @@ const resendVerificationEmail = () => {
 					:title="user?.username || 'John Doe'"
 					:subtitle="user?.email || 'john@doe.com'"
 				>
-					<template v-slot:append>
+					<template #append>
 						<v-btn variant="text" icon="fa fa-pen" @click="$router.push('/profile')" />
 					</template>
 				</v-list-item>
@@ -153,7 +152,7 @@ const resendVerificationEmail = () => {
 					You need to verify your email address before you can continue.
 				</v-banner-text>
 
-				<template v-slot:actions>
+				<template #actions>
 					<v-btn @click="resendVerificationEmail">Resend verification email</v-btn>
 				</template>
 			</v-banner>

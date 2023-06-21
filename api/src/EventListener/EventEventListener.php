@@ -7,12 +7,17 @@ use App\Entity\Ticket;
 use Doctrine\Persistence\Event\LifecycleEventArgs;
 use App\Repository\EventRepository;
 use App\Repository\TicketRepository;
+use App\Service\StripeService;
 
 class EventEventListener
 {
 
-    public function __construct(private EventRepository $eventRepository, private TicketRepository $ticketRepository)
+    private $stripeService;
+
+
+    public function __construct(private EventRepository $eventRepository, private TicketRepository $ticketRepository, StripeService $stripeService)
     {
+        $this->stripeService = $stripeService;
     }
 
     public function postPersist(LifecycleEventArgs $args): void
@@ -27,18 +32,39 @@ class EventEventListener
         //find a ticket with this event
         $ticket = $this->ticketRepository->findOneBy(['event' => $event]);
 
-        if ($ticket) {
-            return;
-        }
- 
-        $ticket = new Ticket();
-        $ticket->setEvent($event);
-        $ticket->setPrice($event->getPrice());
-        $ticket->setStripeTicketId($event->getStripeTicketId());
-        $ticket->setReference(uniqid());
+        //nb of place in Venue seats
+        $nbPlace = $event->getVenue()->getSeats();
 
-   
+        $stripeEvent = $this->stripeService->createEvent($entity->getTitle(), $entity->getType());
+        $entity->setStripeEventtId($stripeEvent->id);
+
+        $stripePrice = $this->stripeService->createPrice($stripeEvent->id, $entity->getPrice());
+        $entity->setStripePriceId($stripePrice->id);
+
+        $schedules = $event->getSchedules();
         $entityManager = $args->getObjectManager();
+        //create tickets for each schedule date an times
+
+        foreach ($schedules as $schedule) {
+            $date = $schedule->getDate();
+            $times = $schedule->getTimes();
+            foreach ($times as $time) {
+                $ticket = new Ticket();
+                $ticket->setEvent($event);
+                $ticket->setPrice($event->getPrice());
+                //$ticket->setStripeTicketId($event->getStripeTicketId());
+                $ticket->setReference(uniqid());
+                $ticket->setStatus(-1);
+                $ticket->setDate($date);
+                $ticket->setTime($time);
+                for ($i = 0; $i < $nbPlace; $i++) {
+                    $ticket->setReference(uniqid());
+                    $entityManager->persist($ticket);
+                }
+            }
+        }
+
+
         $entityManager->flush();
     }
 
@@ -48,6 +74,12 @@ class EventEventListener
         if (!$entity instanceof Event) {
             return;
         }
+
+        $stripeEvent = $this->stripeService->updateEvent($entity->getStripeEventtId(), $entity->getTitle(), $entity->getType());
+        $entity->setStripeEventtId($stripeEvent->id);
+
+        $stripePrice = $this->stripeService->updatePrice($entity->getStripePriceId(), $entity->getPrice());
+        $entity->setStripePriceId($stripePrice->id);
 
         $entityManager = $args->getObjectManager();
         $entityManager->flush();
@@ -60,5 +92,7 @@ class EventEventListener
             return;
         }
 
+        /*  $this->stripeService->deletePrice($entity->getStripePriceId());
+        $this->stripeService->deleteEvent($entity->getStripeEventId());*/
     }
 }

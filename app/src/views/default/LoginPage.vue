@@ -1,25 +1,25 @@
 <script setup lang="ts">
-import { computed, onBeforeMount, reactive, ref, watch } from 'vue'
+import { onBeforeMount, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useVuelidate } from '@vuelidate/core'
 import { email, minLength, maxLength, required } from '@vuelidate/validators'
 
-import * as yup from 'yup'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/store';
+import { useAuthStore, useUtilsStore } from '@/store'
+import { storeToRefs } from 'pinia'
 
 const $router = useRouter()
 const $store = useAuthStore()
+const $utilsStore = useUtilsStore()
+
+const { error, violations } = storeToRefs($store)
 
 const parallax = new URL('@/assets/carnival.jpeg', import.meta.url).href
 
 const valid = ref(true)
-const message = ref('')
-const loading = ref(false)
 const user = ref($store.user)
 const showPassword = ref(false)
 const inputs = reactive({ email: '', password: '' })
 const form = ref<null | typeof import('vuetify/components')['VForm']>(null)
-const toast = ref({ state: false, color: 'success' })
 
 const rules = {
 	email: { required, email, maxLength: maxLength(50) },
@@ -31,28 +31,19 @@ const v$ = useVuelidate(rules, inputs)
 // TODO handle this in the router.onBeforeEach hook instead
 onBeforeMount(() => user.value && $router.push('/profile'))
 
-// watch(message, val => val && setTimeout(() => message.value = '', 3000))
-watch(toast, toast => console.log('toast', toast))
-
 const handleLogin = async (user: any) => {
 	if (!valid.value) return
 
-	loading.value = true
+	$utilsStore.setLoading(true)
 
 	try {
-		const data = await $store.login(user)
-		toast.value.state = true
-		toast.value.color = 'success'
-		message.value = 'Login successful!'
-		$router.push(data)
-		// $router.go(0)
-		// await $store.dispatch('auth/login', user)
+		await $store.login(user)
+		$utilsStore.showToast('Login successful!')
+		$router.push({ name: 'home' })
 	} catch (err: any) {
-		toast.value.state = true
-		toast.value.color = 'danger'
-		message.value = err?.response?.data?.message || err.message || err.toString()
+		$utilsStore.showToast(err, 'danger')
 	} finally {
-		loading.value = false
+		$utilsStore.setLoading(false)
 	}
 }
 </script>
@@ -65,14 +56,13 @@ const handleLogin = async (user: any) => {
 		</div>
 	</v-parallax>
 
-	<v-snackbar v-model="toast.state" :timeout="2000" :color="toast.color" elevation="24">{{ message }}</v-snackbar>
-
-	<v-card :disabled="loading || !inputs" :loading="loading || !inputs">
+	<v-card :disabled="$utilsStore.isLoading || !inputs">
 		<v-form ref="form" v-model="valid" @submit.prevent="handleLogin(inputs)">
 			<v-card-text>
 				<v-row>
 					<v-col cols="12">
 						<v-text-field
+							autofocus
 							v-model="inputs.email"
 							:error-messages="v$.email?.$errors.map((e: any) => e.$message)"
 							:counter="50"
@@ -100,13 +90,15 @@ const handleLogin = async (user: any) => {
 					</v-col>
 				</v-row>
 			</v-card-text>
-			
+
 			<v-card-actions>
 				<v-btn color="primary" variant="tonal" @click="$router.push('/register')">No account yet?</v-btn>
 				<v-btn color="primary" variant="tonal" @click="$router.push('/forgot-password')">Forgot Password?</v-btn>
+
 				<v-spacer />
-				<v-btn :disabled="!inputs.email && !inputs.password" color="primary" @click="form?.reset()" type="reset">Reset</v-btn>
-				<v-btn :disabled="!inputs.email || !inputs.password" color="primary" variant="elevated" type="submit" @click="v$.$validate">Login</v-btn>
+
+				<v-btn :disabled="!v$.$anyDirty" color="primary" @click="form?.reset()" type="reset">Reset</v-btn>
+				<v-btn :loading="$utilsStore.isLoading" color="primary" variant="elevated" type="submit" @click="v$.$validate">Login</v-btn>
 			</v-card-actions>
 		</v-form>
 	</v-card>

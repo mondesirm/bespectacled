@@ -2,28 +2,34 @@
     <div>
         <stripe-checkout ref="checkoutRef" mode="payment" :pk="publishableKey" :line-items="lineItems"
             :success-url="successURL" :cancel-url="cancelURL" @loading="v => loading = v" />
-        <button @click="submit">Pay now!</button>
+            <v-list-item link prepend-icon="fa fa-ticket" title="Buy Tickets" @click="submit" />
     </div>
 </template>
 
 
   
-<script>
+<script >
 import { StripeCheckout } from '@vue-stripe/vue-stripe';
 import { STRIPE_PK } from "../../utils/config";
 
+
 export default {
+    props: ['event'],
+    setup(props) {
+        // setup() receives props as the first argument.
+        console.log(props.event)
+    },
     components: {
         StripeCheckout,
     },
-    data() {
+    data(props) {
         this.publishableKey = STRIPE_PK;
         return {
             publishableKey: STRIPE_PK,
             loading: false,
             lineItems: [
                 {
-                    price: 'price_1N5m0aBXXTfYpnS86RsjWQE9', // The id of the one-time price you created in your Stripe dashboard
+                    price: props.event.stripePriceId, // The id of the one-time price you created in your Stripe dashboard
                     quantity: 1,
                 },
             ],
@@ -33,6 +39,7 @@ export default {
     },
     methods: {
         submit() {
+            console.log(this);
             // You will be redirected to Stripe's secure checkout page
             this.$refs.checkoutRef.redirectToCheckout();
 
