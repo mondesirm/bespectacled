@@ -21,14 +21,12 @@ const helpers: Record<string, Directive<HTMLElement, any>> = {
 const dark: ThemeDefinition = {
 	dark: true,
 	colors: {
-		// info: '',
-		// error: '',
-		// success: '',
-		// warning: '',
 		primary: '#7750f8',
 		surface: '#1d2333',
-		// secondary: '#40d04f',
-		background: '#161b28',
+		secondary: '#45a7f5',
+		// secondary: '#40d04f', // green from xplorer
+		// tertiary: '#da38c0', // pink from filter: hue-rotate(45deg)
+		background: '#161b28'
 	}
 }
 

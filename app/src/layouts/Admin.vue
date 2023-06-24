@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeMount, ref, watch } from 'vue'
+import { computed, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useTheme } from 'vuetify'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
@@ -26,6 +26,7 @@ const { items: schedules, totalItems: totalSchedules, error: scheduleError, isLo
 const page = ref('1')
 const order = ref({})
 const search = ref('')
+const dialog = ref(false)
 const drawer = ref(false)
 const user = computed(() => $store.user)
 
@@ -35,18 +36,6 @@ const categories = computed(() => [
 	{ name: 'Venues', icon: 'fa fa-location-dot', to: '/venues', key: 'name', children: venues.value as [] },
 	{ name: 'Schedules', icon: 'fa fa-calendar-days', to: '/schedule', key: 'date', children: schedules.value as [] }
 ])
-
-const sendRequest = async () => {
-	await $userListStore.getItems({ page: page.value, order: order.value })
-	await $eventListStore.getItems({ page: page.value, order: order.value })
-	await $venueListStore.getItems({ page: page.value, order: order.value })
-	await $scheduleListStore.getItems({ page: page.value, order: order.value })
-}
-
-const debounce = (func: () => void, delay = 500) => {
-	const t = setTimeout(() => func(), delay)
-	return () => clearTimeout(t)
-}
 
 const filteredCategories = computed(() => {
 	const filtered = categories.value.filter(c => c.children.length > 0).map(c => {
@@ -74,6 +63,23 @@ const filteredCategories = computed(() => {
 	return formatted
 })
 
+const sendRequest = async () => {
+	await $userListStore.getItems({ page: page.value, order: order.value })
+	await $eventListStore.getItems({ page: page.value, order: order.value })
+	await $venueListStore.getItems({ page: page.value, order: order.value })
+	await $scheduleListStore.getItems({ page: page.value, order: order.value })
+}
+
+const debounce = (func: () => void, delay = 500) => {
+	const t = setTimeout(() => func(), delay)
+	return () => clearTimeout(t)
+}
+
+const registerShortcuts = (e: KeyboardEvent) => {
+	if (e.key === '/') dialog.value = true
+	if (e.ctrlKey && e.altKey && e.key === 't') toggle()
+}
+
 const toggle = () => {
 	$utilsStore.toggle()
 	// $theme.global.name.value = $store.state.theme.dark ? 'dark' : 'light'
@@ -87,7 +93,11 @@ const resendVerificationEmail = () => {
 	alert('This feature has not been implemented yet.')
 }
 
-// onBeforeMount(() => $theme.global.name.value = $utilsStore.dark ? 'dark' : 'light')
+onBeforeMount(() => $theme.global.name.value = $utilsStore.dark ? 'dark' : 'light')
+
+// Register shortcuts
+onMounted(() => window.addEventListener('keydown', registerShortcuts))
+onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
 
 watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 </script>
@@ -99,7 +109,7 @@ watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 				<v-app-bar-nav-icon @click.stop="drawer = !drawer" />
 				<v-btn prepend-icon="fa fa-glasses" color="white" @click="$router.push('/admin')">BeSpectacled Admin</v-btn>
 
-				<v-dialog scrollable>
+				<v-dialog v-model="dialog" scrollable>
 					<template #activator="{ props }">
 						<v-btn prepend-icon="fa fa-search" v-bind="props">Search</v-btn>
 					</template>
@@ -130,8 +140,8 @@ watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 								</v-list>
 
 								<v-container v-else class="text-center">
-									<v-icon size="100">fa fa-info-circle</v-icon>
-									<v-list-subheader class="d-inline ">Search for artists, events, venues, etc...</v-list-subheader>
+									<v-icon class="mb-6 text-disabled" icon="fab fa-searchengin" size="150" />
+									<v-list-subheader class="d-inline ">Your search results will appear here</v-list-subheader>
 								</v-container>
 							</v-card-text>
 						</v-card>

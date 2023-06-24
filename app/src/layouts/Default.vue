@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useTheme } from 'vuetify'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
@@ -30,10 +30,11 @@ const { items: schedules, totalItems: totalSchedules, error: scheduleError, isLo
 const tab = ref(null)
 const page = ref('1')
 const order = ref({})
+const scroll = ref(0)
 const search = ref('')
 const dialog = ref(false)
 const drawer = ref(false)
-const scrolled = ref(false)
+const scrolled = computed(() => scroll.value > 50)
 
 // user.value = JSON.parse(localStorage.getItem('user') || 'null')
 
@@ -48,7 +49,7 @@ const icons = {
 // }[$router.currentRoute.value.name]
 
 const categories = computed(() => [
-	{ name: 'Users', icon: 'fa fa-user-tie', to: '/users/', key: 'username', children: users.value as [] },
+	{ name: 'Artists', icon: 'fa fa-user-tie', to: '/artists/', key: 'username', children: users.value as [] },
 	{ name: 'Events', icon: 'fa fa-star', to: '/events/', key: 'title', children: events.value as [] },
 	{ name: 'Venues', icon: 'fa fa-location-dot', to: '/venues/', key: 'name', children: venues.value as [] },
 	{ name: 'Schedules', icon: 'fa fa-calendar-days', to: '/schedule/', key: 'date', children: schedules.value as [] }
@@ -81,14 +82,17 @@ const filteredCategories = computed(() => {
 })
 
 const sendRequest = async () => {
-	await useEventListStore().getItems({ page: page.value, order: order.value })
-
-	// Make a promise all to get all the data when it's available
-	const [artists, events, venues] = await Promise.all([
+	await Promise.all([
 		useUserListStore().getItems({ page: page.value, order: order.value }),
 		useEventListStore().getItems({ page: page.value, order: order.value }),
-		useVenueListStore().getItems({ page: page.value, order: order.value })
+		useVenueListStore().getItems({ page: page.value, order: order.value }),
+		useScheduleListStore().getItems({ page: page.value, order: order.value })
 	])
+}
+
+const debounce = (func: () => void, delay = 500) => {
+	const t = setTimeout(() => func(), delay)
+	return () => clearTimeout(t)
 }
 
 const registerShortcuts = (e: KeyboardEvent) => {
@@ -113,12 +117,14 @@ onBeforeMount(() => $theme.global.name.value = $utilsStore.dark ? 'dark' : 'ligh
 // Register shortcuts
 onMounted(() => window.addEventListener('keydown', registerShortcuts))
 onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
+
+watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 </script>
 
 <template>
 	<v-app :dark="$utilsStore.dark">
 		<!-- <v-parallax style="background-size: cover;" :src="backgroundImage"> -->
-			<v-app-bar class="ps-4" :height="scrolled || $router.currentRoute.value.name !== 'home' ? undefined : 100" :elevation="scrolled ? 4 : 0"  :color="scrolled ? 'primary' : 'transparent'" density="compact" v-scroll="(e: any) => scrolled = e.target.scrollingElement.scrollTop > 50" app flat>
+			<v-app-bar class="ps-4" :height="scrolled || $router.currentRoute.value.name !== 'home' ? undefined : 100" :elevation="scrolled ? 4 : 0"  :color="scrolled ? 'primary' : 'transparent'" density="compact" v-scroll="(e: any) => scroll = e.target.scrollingElement.scrollTop" app flat>
 				<v-progress-linear class="position-fixed" :active="$utilsStore.isLoading" color="white" indeterminate />
 
 				<template #prepend>
@@ -158,7 +164,7 @@ onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
 								<v-card-text>
 									<v-list v-if="search" lines="one" density="compact">
 										<template v-for="{ name, icon, to, key, children } in filteredCategories" :key="name">
-											<router-link class="text-high-emphasis font-weight-black text-uppercase" :to="to">{{ name }}</router-link>
+											<p><router-link class="text-high-emphasis font-weight-black text-uppercase" :to="to">{{ name }}</router-link></p>
 											<v-list-item v-for="child in children" :key="child" :prepend-icon="icon" :title="child[key]" @click="$router.push(to + '/' + child.id); isActive.value = false" />
 										</template>
 									</v-list>
@@ -264,7 +270,7 @@ onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
 				<v-container class="mb-7">
 					<router-view v-slot="{ Component }">
 						<keep-alive>
-							<component :is="Component" :key="$route.fullPath"></component>
+							<component :is="Component" :key="$route.fullPath" :scroll="scroll"></component>
 						</keep-alive>
 					</router-view>
 				</v-container>

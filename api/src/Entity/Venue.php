@@ -54,14 +54,24 @@ class Venue
     private ?string $type = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank, Assert\Positive]
+    #[Groups(['venue:read', 'venue:write', 'event:read'])]
+    private ?float $price = null;
+
+    #[ORM\Column]
+    #[Groups(['venue:read', 'venue:write', 'event:read'])]
+    private ?string $description = null;
+
+    #[ORM\Column]
     #[Assert\NotBlank]
     #[Groups(['venue:read', 'venue:write', 'event:read'])]
     private ?int $seats = null;
 
     #[ORM\Column]
-    #[Assert\NotBlank, Assert\Positive]
+    #[Assert\NotBlank]
+    #[Assert\Length(min: 3, max: 255)]
     #[Groups(['venue:read', 'venue:write', 'event:read'])]
-    private ?float $price = null;
+    private ?string $location = null;
 
     #[ORM\Column]
     #[Groups(['venue:read', 'venue:write', 'event:read'])]
@@ -105,6 +115,30 @@ class Venue
         return $this;
     }
 
+    public function getPrice(): ?float
+    {
+        return $this->price;
+    }
+
+    public function setPrice(float $price): self
+    {
+        $this->price = $price;
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(string $description): self
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
     public function getSeats(): ?int
     {
         return $this->seats;
@@ -117,14 +151,14 @@ class Venue
         return $this;
     }
 
-    public function getPrice(): ?float
+    public function getLocation(): ?string
     {
-        return $this->price;
+        return $this->location;
     }
 
-    public function setPrice(float $price): self
+    public function setLocation(string $location): self
     {
-        $this->price = $price;
+        $this->location = $location;
 
         return $this;
     }
