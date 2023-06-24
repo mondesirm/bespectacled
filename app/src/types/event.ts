@@ -7,6 +7,7 @@ export interface Event extends Item {
 	title: string
 	type: string
 	price: number
+	description: string
 	src?: string
 	venue?: Venue
 	artists: User[]

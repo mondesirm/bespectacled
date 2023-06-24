@@ -103,7 +103,7 @@
 			"php bin/phpunit"
 		],
 		"serve": [
-			"symfony serve --port 80 --allow-http -d"
+			"symfony serve --port 80 --allow-http"
 		],
 		"stop": [
 			"symfony server:stop"

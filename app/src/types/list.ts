@@ -8,7 +8,7 @@ export interface Order {
 
 export interface VuetifyOrder {
 	key: string
-	order: string
+	order?: boolean | 'asc' | 'desc'
 }
 
 export interface ListParams {

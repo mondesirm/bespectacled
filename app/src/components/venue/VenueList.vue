@@ -48,6 +48,8 @@ const headers = [
 	{ title: t('venue.name'), key: 'name', sortable: true },
 	{ title: t('venue.type'), key: 'type', sortable: true },
 	{ title: t('venue.price'), key: 'price', sortable: true },
+	{ title: t('venue.seats'), key: 'seats', sortable: true },
+	{ title: t('venue.location'), key: 'location', sortable: true },
 	{ title: t('venue.events'), key: 'events', sortable: false }
 ]
 
@@ -128,6 +130,14 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 
 			<template #item.price="{ item }">
 				${{ item.raw.price }}
+			</template>
+
+			<template #item.seats="{ item }">
+				${{ item.raw.seats }}
+			</template>
+
+			<template #item.location="{ item }">
+				${{ item.raw.location }}
 			</template>
 
 			<template #item.events="{ item }">

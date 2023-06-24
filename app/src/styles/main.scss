@@ -69,6 +69,10 @@ html,
 	margin-bottom: 0;
 }
 
+.v-table .v-img__img {
+	object-position: left;
+}
+
 .blend {
 	padding-inline: 8px;
 	border-radius: 5px;
@@ -77,6 +81,15 @@ html,
 	mix-blend-mode: lighten;
 }
 
-.v-table .v-img__img {
-	object-position: left;
+.backdrop {
+	background-color: #7750f877 !important;
+	backdrop-filter: blur(5px);
+	-webkit-backdrop-filter: blur(5px);
+}
+
+.clamp {
+	overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
 }

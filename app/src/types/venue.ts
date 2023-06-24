@@ -4,8 +4,10 @@ import type { Event } from './event'
 export interface Venue extends Item {
 	name: string
 	type: string
-	seats: number
 	price: number
+	description: string
+	seats: number
+	location: string
 	src?: string
-	events?: Event[]
+	events: Event[]
 }
