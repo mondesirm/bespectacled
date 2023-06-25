@@ -1,5 +1,6 @@
 import 'vuetify/styles'
 import { Directive } from 'vue'
+import { md3 } from 'vuetify/blueprints'
 import { mdi } from 'vuetify/iconsets/mdi'
 import * as labs from 'vuetify/labs/components'
 import * as components from 'vuetify/components'
@@ -33,7 +34,7 @@ const dark: ThemeDefinition = {
 const variations = {
 	darken: 1,
 	lighten: 1,
-	colors: ['primary', 'secondary']
+	colors: ['primary', 'surface', 'secondary']
 }
 
 export default createVuetify({

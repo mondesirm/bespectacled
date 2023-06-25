@@ -151,7 +151,7 @@ export const useAuthStore = defineStore('auth', {
 			router.push('/login')
 		},
 		profile(data = null) {
-			return axios.get(`${baseUrl}/users/me`, { headers: headers(data) })
+			return axios.get(`${baseUrl}/profile`, { headers: headers(data) })
 		},
 		setUser(user: User | undefined) {
 			this.user = user

@@ -14,7 +14,7 @@ App\Entity\Venue:
     name: <($venues[$current - 1]['name'])>
     type: <($venues[$current - 1]['type'])>
     price: <numberBetween(5000, 10000)>
-    description: <text(200)>
+    description: <paragraphs(5, true)>
     seats: <($venues[$current - 1]['seats'])>
     location: <($venues[$current - 1]['location'])>
     src: <($venues[$current - 1]['src'])>

@@ -6,6 +6,8 @@ import Breadcrumb from '@/components/common/Breadcrumb.vue'
 import ConfirmDelete from '@/components/common/ConfirmDelete.vue'
 
 defineProps<{
+	main?: boolean
+	color?: string
 	actions?: ('submit' | 'reset' | 'delete' | 'add' | 'edit')[]
 	isLoading: boolean
 	breadcrumb: BreadcrumbValue[]
@@ -23,8 +25,8 @@ const confirm = ref(false)
 </script>
 
 <template>
-	<v-toolbar class="mb-4 sticky-top sticky-nav" color="pink-accent-4" dark rounded>
-		<Breadcrumb :breadcrumb="breadcrumb" />
+	<v-toolbar class="mb-4 sticky-top sticky-nav" :color="color ?? 'pink-accent-4'" elevation="12" dark rounded>
+		<Breadcrumb :main="main" :breadcrumb="breadcrumb" />
 
 		<v-spacer />
 

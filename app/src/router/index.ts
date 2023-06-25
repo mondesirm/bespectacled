@@ -28,11 +28,11 @@ const routes = [
 		path: '/', component: () => import('@/layouts/Default.vue'), children: [
 			{ path: '', name: 'home', component: () => import('@/views/default/HomePage.vue') },
 			{ path: 'artists', name: 'artists', component: () => import('@/views/default/ArtistsPage.vue') },
-			{ path: 'artists/:id', name: 'artist', component: () => import('@/views/default/ArtistPage.vue') },
-			{ path: 'events', name: 'events', component: () => import('@/views/default/EventsPage.vue'), meta: { breadcrumb: ['Events'] } },
-			{ path: 'events/:id', name: 'event', component: () => import('@/views/default/BlankPage.vue'), meta: { breadcrumb: ['Events', 'Show Event'] } },
+			{ path: 'artists/:id', name: 'artist', component: () => import('@/views/default/ArtistPage.vue'), meta: { breadcrumb: [{ title: 'Artists', to: { name: 'artists' } }] } },
+			{ path: 'events', name: 'events', component: () => import('@/views/default/EventsPage.vue') },
+			{ path: 'events/:id', name: 'event', component: () => import('@/views/event/ViewShow.vue'), meta: { breadcrumb: [{ title: 'Events', to: { name: 'events' } }] } },
 			{ path: 'venues', name: 'venues', component: () => import('@/views/default/VenuesPage.vue') },
-			{ path: 'venues/:id', name: 'venue', component: () => import('@/views/default/BlankPage.vue') },
+			{ path: 'venues/:id', name: 'venue', component: () => import('@/views/default/BlankPage.vue'), meta: { breadcrumb: [{ title: 'Venues', to: { name: 'venues' } }] } },
 			{ path: 'calendar', name: 'calendar', component: () => import('@/views/default/CalendarPage.vue') },
 			{ path: 'ticketing', name: 'ticketing', component: () => import('@/views/default/TicketingPage.vue') },
 
