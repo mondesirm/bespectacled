@@ -3,29 +3,31 @@ import { computed, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue
 import { useTheme } from 'vuetify'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
+import { useDate } from 'vuetify/labs/date'
 
 import Carousel from '@/components/custom/Carousel.vue'
 import { useAuthStore, useEventListStore, useScheduleListStore, useUserListStore, useUtilsStore, useVenueListStore } from '@/store'
 
-const $theme = useTheme()
-const $router = useRouter()
+const date = useDate()
+const theme = useTheme()
+const router = useRouter()
 
-const $utilsStore = useUtilsStore()
+const utilsStore = useUtilsStore()
 
-const $store = useAuthStore()
-const { user } = storeToRefs($store)
+const store = useAuthStore()
+const { user } = storeToRefs(store)
 
-const $userListStore = useUserListStore()
-const { items: users, totalItems: totalUsers, error: userError, isLoading: userIsLoading } = storeToRefs($userListStore)
+const userListStore = useUserListStore()
+const { items: users, totalItems: totalUsers, error: userError, isLoading: userIsLoading } = storeToRefs(userListStore)
 
-const $eventListStore = useEventListStore()
-const { items: events, totalItems: totalEvents, error: eventError, isLoading: eventIsLoading } = storeToRefs($eventListStore)
+const eventListStore = useEventListStore()
+const { items: events, totalItems: totalEvents, error: eventError, isLoading: eventIsLoading } = storeToRefs(eventListStore)
 
-const $venueListStore = useVenueListStore()
-const { items: venues, totalItems: totalVenues, error: venueError, isLoading: venueIsLoading } = storeToRefs($venueListStore)
+const venueListStore = useVenueListStore()
+const { items: venues, totalItems: totalVenues, error: venueError, isLoading: venueIsLoading } = storeToRefs(venueListStore)
 
-const $scheduleListStore = useScheduleListStore()
-const { items: schedules, totalItems: totalSchedules, error: scheduleError, isLoading: scheduleIsLoading } = storeToRefs($scheduleListStore)
+const scheduleListStore = useScheduleListStore()
+const { items: schedules, totalItems: totalSchedules, error: scheduleError, isLoading: scheduleIsLoading } = storeToRefs(scheduleListStore)
 
 const tab = ref(null)
 const page = ref('1')
@@ -49,10 +51,10 @@ const icons = {
 // }[$router.currentRoute.value.name]
 
 const categories = computed(() => [
-	{ name: 'Artists', icon: 'fa fa-user-tie', to: '/artists/', key: 'username', children: users.value as [] },
-	{ name: 'Events', icon: 'fa fa-star', to: '/events/', key: 'title', children: events.value as [] },
-	{ name: 'Venues', icon: 'fa fa-location-dot', to: '/venues/', key: 'name', children: venues.value as [] },
-	{ name: 'Schedules', icon: 'fa fa-calendar-days', to: '/schedule/', key: 'date', children: schedules.value as [] }
+	{ name: 'Artists', icon: 'fa fa-user-tie', to: '/artists', key: 'username', children: users.value as [] },
+	{ name: 'Events', icon: 'fa fa-star', to: '/events', key: 'title', children: events.value as [] },
+	{ name: 'Venues', icon: 'fa fa-location-dot', to: '/venues', key: 'name', children: venues.value as [] },
+	{ name: 'Schedules', icon: 'fa fa-calendar-days', to: '/schedule', key: 'date', children: schedules.value as [] }
 ])
 
 const filteredCategories = computed(() => {
@@ -83,10 +85,10 @@ const filteredCategories = computed(() => {
 
 const sendRequest = async () => {
 	await Promise.all([
-		useUserListStore().getItems({ page: page.value, order: order.value }),
+		useUserListStore().getArtists({ page: page.value, order: order.value, username: search.value }),
 		useEventListStore().getItems({ page: page.value, order: order.value }),
-		useVenueListStore().getItems({ page: page.value, order: order.value }),
-		useScheduleListStore().getItems({ page: page.value, order: order.value })
+		useVenueListStore().getItems({ page: page.value, order: order.value, name: search.value }),
+		useScheduleListStore().getItems({ page: page.value, order: order.value, 'event.value': search.value })
 	])
 }
 
@@ -101,39 +103,41 @@ const registerShortcuts = (e: KeyboardEvent) => {
 }
 
 const toggle = () => {
-	$utilsStore.toggle()
-	$theme.global.name.value = $utilsStore.dark ? 'dark' : 'light'
+	utilsStore.toggle()
+	theme.global.name.value = utilsStore.dark ? 'dark' : 'light'
 }
 
-const logout = () => $store.logout()
+const logout = () => store.logout()
 
 const resendVerificationEmail = () => {
 	// TODO $store.dispatch('auth/resendVerificationEmail')
 	alert('This feature has not been implemented yet.')
 }
 
-onBeforeMount(() => $theme.global.name.value = $utilsStore.dark ? 'dark' : 'light')
+onBeforeMount(() => theme.global.name.value = utilsStore.dark ? 'dark' : 'light')
 
 // Register shortcuts
 onMounted(() => window.addEventListener('keydown', registerShortcuts))
 onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
 
-watch(() => search.value, val => { val && debounce(() => sendRequest()) })
+sendRequest()
+
+// watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 </script>
 
 <template>
-	<v-app :dark="$utilsStore.dark">
+	<v-app :dark="utilsStore.dark">
 		<!-- <v-parallax style="background-size: cover;" :src="backgroundImage"> -->
-			<v-app-bar class="ps-4" :height="scrolled || $router.currentRoute.value.name !== 'home' ? undefined : 100" :elevation="scrolled ? 4 : 0"  :color="scrolled ? 'primary' : 'transparent'" density="compact" v-scroll="(e: any) => scroll = e.target.scrollingElement.scrollTop" app flat>
-				<v-progress-linear class="position-fixed" :active="$utilsStore.isLoading" color="white" indeterminate />
+			<v-app-bar class="ps-4" :height="scrolled || router.currentRoute.value.name !== 'home' ? undefined : 100" :elevation="scrolled ? 4 : 0"  :color="scrolled ? 'primary' : 'transparent'" density="compact" v-scroll="(e: any) => scroll = e.target.scrollingElement.scrollTop" app flat>
+				<v-progress-linear class="position-fixed" :active="utilsStore.isLoading" color="white" indeterminate />
 
 				<template #prepend>
 					<v-app-bar-nav-icon class="me-4" :icon="'fa ' + (drawer ? 'fa-times' : 'fa-bars fa-fade')" @click="drawer = !drawer" />
-					<v-btn prepend-icon="fa fa-glasses" :color="scrolled ? 'white' : 'primary'" :size="scrolled || $router.currentRoute.value.name !== 'home' ? undefined : 'x-large'" @click="$router.push({ name: 'home' })">BeSpectacled</v-btn>
+					<v-btn prepend-icon="fa fa-glasses" :color="scrolled ? 'white' : 'primary'" :size="scrolled || router.currentRoute.value.name !== 'home' ? undefined : 'x-large'" @click="router.push({ name: 'home' })">BeSpectacled</v-btn>
 
 					<v-dialog v-model="dialog" width="500" height="90%" scrollable>
 						<template #activator="{ props }">
-							<v-btn v-bind="props" prepend-icon="fa fa-search" :size="scrolled || $router.currentRoute.value.name !== 'home' ? undefined : 'x-large'">
+							<v-btn v-bind="props" prepend-icon="fa fa-search" :size="scrolled || router.currentRoute.value.name !== 'home' ? undefined : 'x-large'">
 								Search
 								<div class="py-1 px-2 ms-2 border rounded text-disabled text-caption">Press /</div>
 							</v-btn>
@@ -165,7 +169,10 @@ watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 									<v-list v-if="search" lines="one" density="compact">
 										<template v-for="{ name, icon, to, key, children } in filteredCategories" :key="name">
 											<p><router-link class="text-high-emphasis font-weight-black text-uppercase" :to="to">{{ name }}</router-link></p>
-											<v-list-item v-for="child in children" :key="child" :prepend-icon="icon" :title="child[key]" @click="$router.push(to + '/' + child.id); isActive.value = false" />
+											<v-list-item v-for="child in children" :key="child" :prepend-icon="icon" @click="router.push(to + '/' + child.id); isActive.value = false">
+												<v-list-item-title v-if="name === 'Schedules'">{{ date.format(new Date(child[key]), 'normalDateWithWeekday') }} - {{ child?.event?.title }}</v-list-item-title>
+												<v-list-item-title v-else>{{ child[key] }}</v-list-item-title>
+											</v-list-item>
 										</template>
 									</v-list>
 
@@ -180,12 +187,12 @@ watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 
 					<v-menu v-if="$vuetify.display.smAndDown">
 						<template v-slot:activator="{ props }">
-							<v-btn v-bind="props" append-icon="fa fa-ellipsis-vertical" :size="scrolled || $router.currentRoute.value.name !== 'home' ? undefined : 'x-large'" text="More" />
+							<v-btn v-bind="props" append-icon="fa fa-ellipsis-vertical" :size="scrolled || router.currentRoute.value.name !== 'home' ? undefined : 'x-large'" text="More" />
 						</template>
 
 						<v-sheet>
 							<v-tabs v-model="tab" direction="vertical">
-								<v-tab v-for="(icon, type, i) in icons" :key="i" :prepend-icon="icon" color="primary" :value="type" @click="$router.push({ name: 'events', query: { type } })">
+								<v-tab v-for="(icon, type, i) in icons" :key="i" :prepend-icon="icon" color="primary" :value="type" @click="router.push({ name: 'events', query: { type } })">
 									{{ type.charAt(0).toUpperCase() + type.slice(1) }}
 								</v-tab>
 							</v-tabs>
@@ -193,16 +200,16 @@ watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 					</v-menu>
 
 					<v-tabs v-else v-model="tab">
-						<v-tab v-for="(icon, type, i) in icons" :key="i" :prepend-icon="icon" :color="scrolled ? undefined : 'primary'" :value="type" @click="$router.push({ name: 'events', query: { type } })">
+						<v-tab v-for="(icon, type, i) in icons" :key="i" :prepend-icon="icon" :color="scrolled ? undefined : 'primary'" :value="type" @click="router.push({ name: 'events', query: { type } })">
 							{{ type.charAt(0).toUpperCase() + type.slice(1) }}
 						</v-tab>
 					</v-tabs>
 				</template>
 
 				<template #append>
-					<v-btn v-if="user?.token" prepend-icon="fa fa-id-card" :color="scrolled ? 'white' : 'primary'" :size="scrolled || $router.currentRoute.value.name !== 'home' ? undefined : 'x-large'" variant="outlined" @click="$router.push('/profile')">Profile</v-btn>
-					<v-btn v-else prepend-icon="fa fa-right-to-bracket" :color="scrolled ? 'white' : 'primary'" :size="scrolled || $router.currentRoute.value.name !== 'home' ? undefined : 'x-large'" @click="$router.push('/login')">Login</v-btn>
-					<v-btn :icon="$theme.global.current.value.dark ? 'fa fa-sun' : 'fa fa-moon'" @click="toggle" />
+					<v-btn v-if="user?.token" prepend-icon="fa fa-id-card" :color="scrolled ? 'white' : 'primary'" :size="scrolled || router.currentRoute.value.name !== 'home' ? undefined : 'x-large'" variant="outlined" @click="router.push('/profile')">Profile</v-btn>
+					<v-btn v-else prepend-icon="fa fa-right-to-bracket" :color="scrolled ? 'white' : 'primary'" :size="scrolled || router.currentRoute.value.name !== 'home' ? undefined : 'x-large'" @click="router.push('/login')">Login</v-btn>
+					<v-btn :icon="theme.global.current.value.dark ? 'fa fa-sun' : 'fa fa-moon'" @click="toggle" />
 				</template>
 			</v-app-bar>
 
@@ -211,7 +218,7 @@ watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 					<v-list>
 						<v-list-item prepend-icon="fa fa-user-circle" :title="user?.username" :subtitle="user?.email">
 							<template #append>
-								<v-btn variant="text" icon="fa fa-pen" @click="$router.push('/profile')" />
+								<v-btn variant="text" icon="fa fa-pen" @click="router.push('/profile')" />
 							</template>
 
 							<v-progress-linear v-if="!user?.username" color="primary" rounded indeterminate />
@@ -221,21 +228,21 @@ watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 					<v-divider />
 
 					<v-list density="default" nav>
-						<v-list-item prepend-icon="fa fa-id-card" title="Profile" @click="$router.push('/profile')" />
-						<v-list-item v-if="user.roles?.includes('ROLE_ADMIN')" prepend-icon="fa fa-gauge" title="Admin Panel" @click="$router.push('/admin')" />
+						<v-list-item prepend-icon="fa fa-id-card" title="Profile" @click="router.push('/profile')" />
+						<v-list-item v-if="user.roles?.includes('ROLE_ADMIN')" prepend-icon="fa fa-gauge" title="Admin Panel" @click="router.push('/admin')" />
 						<v-list-item prepend-icon="fa fa-sign-out-alt" title="Logout" @click.prevent="logout" />
 					</v-list>
 				</template>
 
 				<v-list v-else>
-					<v-list-item prepend-icon="fa fa-sign-in-alt" title="Login" @click="$router.push('/login')" />
-					<v-list-item prepend-icon="fa fa-user-plus" title="Register" @click="$router.push('/register')" />
+					<v-list-item prepend-icon="fa fa-sign-in-alt" title="Login" @click="router.push('/login')" />
+					<v-list-item prepend-icon="fa fa-user-plus" title="Register" @click="router.push('/register')" />
 				</v-list>
 
 				<v-divider />
 
 				<v-list density="default" nav>
-					<v-list-item v-for="{ name, icon, to } in categories" :key="name" :prepend-icon="icon" :title="name" @click="$router.push(to)" />
+					<v-list-item v-for="{ name, icon, to } in categories" :key="name" :prepend-icon="icon" :title="name" @click="router.push(to)" />
 				</v-list>
 
 				<!-- <template #append>
@@ -246,11 +253,11 @@ watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 			</v-navigation-drawer>
 
 			<!-- Message Toast -->
-			<v-snackbar :="$utilsStore.toast" elevation="24" transition="slide-y-transition">
-				{{ $utilsStore.toast.text }}
+			<v-snackbar :="utilsStore.toast" elevation="24" transition="slide-y-transition">
+				{{ utilsStore.toast.text }}
 
 				<template #actions>
-					<v-btn icon="fa fa-times" color="white" @click="$utilsStore.hideToast()" />
+					<v-btn icon="fa fa-times" color="white" @click="utilsStore.hideToast()" />
 				</template>
 			</v-snackbar>
 
@@ -265,7 +272,7 @@ watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 					</template>
 				</v-banner>
 
-				<Carousel class="mt-n12" v-if="$router.currentRoute.value.name === 'home'" />
+				<Carousel class="mt-n12" v-if="router.currentRoute.value.name === 'home'" />
 
 				<v-container class="mb-7">
 					<router-view v-slot="{ Component }">

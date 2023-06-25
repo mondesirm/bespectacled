@@ -6,6 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiFilter;
 use App\Repository\EventRepository;
 use ApiPlatform\Metadata\ApiResource;
+use Gedmo\Mapping\Annotation as Gedmo;
 use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -13,7 +14,6 @@ use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
-
 #[ORM\Entity(repositoryClass: EventRepository::class)]
 #[UniqueEntity(fields: 'title', message: 'This event already exists.')]
 #[ApiResource(
@@ -28,6 +28,10 @@ class Event
     #[Groups(['event:read', 'venue:read', 'user:read', 'schedule:read'])]
     private ?int $id = null;
 
+    #[Gedmo\Slug(fields: ['title'])]
+    #[ORM\Column(length: 128, unique: true)]
+    private ?string $slug = null;
+
     #[ORM\Column]
     #[Assert\NotBlank]
     #[Assert\Length(min: 3, max: 255)]
@@ -37,37 +41,37 @@ class Event
     #[Assert\NotBlank]
     #[ORM\Column(length: 255)]
     #[Assert\Length(min: 3, max: 255)]
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'schedule:read'])]
+    #[Groups(['event:read', 'event:write', 'venue:read'])]
     private ?string $type = null;
 
     #[Assert\NotBlank]
     #[Assert\Positive]
     #[ORM\Column(type: 'float')]
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'schedule:read'])]
+    #[Groups(['event:read', 'event:write', 'venue:read'])]
     private ?int $price = null;
 
-    #[ORM\Column]
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'schedule:read'])]
+    #[ORM\Column(type: 'text')]
+    #[Groups(['event:read', 'event:write', 'venue:read'])]
     private ?string $description = null;
 
     #[ORM\Column]
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'schedule:read'])]
+    #[Groups(['event:read', 'event:write', 'venue:read'])]
     private ?string $src = null;
 
     #[ORM\JoinColumn]
     #[Assert\NotBlank]
     #[ORM\ManyToOne(inversedBy: 'events')]
-    #[Groups(['event:read', 'event:write', 'user:read', 'schedule:read'])]
+    #[Groups(['event:read', 'event:write'])]
     private ?Venue $venue = null;
 
     #[Assert\NotBlank]
     #[Assert\Count(min: 1)]
     #[ORM\JoinTable(name: 'event_artist')]
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'schedule:read'])]
+    #[Groups(['event:read', 'event:write', 'venue:read'])]
     #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'events')]
     private Collection $artists;
 
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'schedule:read'])]
+    #[Groups(['event:read', 'event:write', 'venue:read'])]
     #[ORM\OneToMany(targetEntity: Schedule::class, mappedBy: 'event', orphanRemoval: true)]
     private Collection $schedules;
 
@@ -85,6 +89,18 @@ class Event
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getSlug(): ?string
+    {
+        return $this->slug;
+    }
+
+    public function setSlug(string $slug): self
+    {
+        $this->slug = $slug;
+
+        return $this;
     }
 
     public function getTitle(): ?string

@@ -15,4 +15,5 @@ export interface ListParams {
 	page: string
 	filters?: Filters
 	order?: Order
+	[field: string]: any
 }
