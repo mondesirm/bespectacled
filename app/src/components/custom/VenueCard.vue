@@ -6,11 +6,6 @@ import type { Venue } from '@/types/venue'
 defineProps<{ venue: Venue }>()
 
 const menus = ref<{ events: boolean[] }>({ events: [] })
-
-const options: { [key: string]: Intl.DateTimeFormatOptions } = {
-	short: { month: 'short', day: 'numeric' },
-	long: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
-}
 </script>
 
 <template>

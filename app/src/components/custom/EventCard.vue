@@ -13,7 +13,7 @@ const icons: Record<string, string> = {
 
 const menus = ref<{ venue: boolean, days: boolean[], times: Record<string, boolean> }>({ venue: false, days: [], times: {} })
 
-const options: { [key: string]: Intl.DateTimeFormatOptions } = {
+const formats: Record<string, Intl.DateTimeFormatOptions> = {
 	short: { month: 'short', day: 'numeric' },
 	long: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
 }
@@ -117,12 +117,12 @@ const options: { [key: string]: Intl.DateTimeFormatOptions } = {
 					:disabled="Date.now() > new Date(day.date).getTime()"
 				>
 					<template #activator="{ props }">
-						<v-chip v-bind="props" :disabled="Date.now() > new Date(day.date).getTime()" :text="new Date(day.date).toLocaleDateString($vuetify.locale.current, options.short)" link pill />
+						<v-chip v-bind="props" :disabled="Date.now() > new Date(day.date).getTime()" :text="new Date(day.date).toLocaleDateString($vuetify.locale.current, formats.short)" link pill />
 					</template>
 
 					<v-card width="max-content">
 						<v-list bg-color="black">
-							<v-list-item :title="(new Date(day.date)).toLocaleDateString($vuetify.locale.current, options.long)" :subtitle="day.times.length + (day.times.length === 1 ? ` time` : ' times') + ' available'" prepend-icon="fa fa-calendar">
+							<v-list-item :title="(new Date(day.date)).toLocaleDateString($vuetify.locale.current, formats.long)" :subtitle="day.times.length + (day.times.length === 1 ? ` time` : ' times') + ' available'" prepend-icon="fa fa-calendar">
 								<template #append>
 									<v-list-item-action>
 										<v-btn icon="fa fa-times-circle" variant="text" @click="menus.days[i] = false" />
@@ -148,7 +148,7 @@ const options: { [key: string]: Intl.DateTimeFormatOptions } = {
 
 									<v-card width="max-content">
 										<v-list bg-color="black">
-											<v-list-item :title="time" :subtitle="(new Date(day.date)).toLocaleDateString($vuetify.locale.current, options.long)" prepend-icon="fa fa-clock">
+											<v-list-item :title="time" :subtitle="(new Date(day.date)).toLocaleDateString($vuetify.locale.current, formats.long)" prepend-icon="fa fa-clock">
 												<template #append>
 													<v-list-item-action>
 														<v-btn icon="fa fa-times-circle" variant="text" @click="menus.times[day.date + 'T' + time] = false" />

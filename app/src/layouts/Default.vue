@@ -6,6 +6,7 @@ import { useRouter } from 'vue-router'
 import { useDate } from 'vuetify/labs/date'
 
 import Carousel from '@/components/custom/Carousel.vue'
+import NotFound from '@/components/custom/NotFound.vue'
 import { useAuthStore, useEventListStore, useScheduleListStore, useUserListStore, useUtilsStore, useVenueListStore } from '@/store'
 
 const date = useDate()
@@ -54,7 +55,7 @@ const categories = computed(() => [
 	{ name: 'Artists', icon: 'fa fa-user-tie', to: '/artists', key: 'username', children: users.value as [] },
 	{ name: 'Events', icon: 'fa fa-star', to: '/events', key: 'title', children: events.value as [] },
 	{ name: 'Venues', icon: 'fa fa-location-dot', to: '/venues', key: 'name', children: venues.value as [] },
-	{ name: 'Schedules', icon: 'fa fa-calendar-days', to: '/schedule', key: 'date', children: schedules.value as [] }
+	{ name: 'Calendar', icon: 'fa fa-calendar-days', to: '/calendar', key: 'date', children: schedules.value as [] }
 ])
 
 const filteredCategories = computed(() => {
@@ -272,7 +273,8 @@ sendRequest()
 					</template>
 				</v-banner>
 
-				<Carousel class="mt-n12" v-if="router.currentRoute.value.name === 'home'" />
+				<Carousel class="mt-n12" v-if="$route.name === 'home'" />
+				<NotFound class="mt-n12" v-if="$route.name === 'not-found'" />
 
 				<v-container class="mb-7">
 					<router-view v-slot="{ Component }">

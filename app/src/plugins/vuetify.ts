@@ -1,6 +1,5 @@
 import 'vuetify/styles'
 import { Directive } from 'vue'
-import { md3 } from 'vuetify/blueprints'
 import { mdi } from 'vuetify/iconsets/mdi'
 import * as labs from 'vuetify/labs/components'
 import * as components from 'vuetify/components'
@@ -9,7 +8,6 @@ import { aliases, fa } from 'vuetify/iconsets/fa'
 import { createVuetify, ThemeDefinition  } from 'vuetify'
 import { VuetifyDateAdapter as adapter } from 'vuetify/labs/date/adapters/vuetify'
 
-// TODO v-admin and v-tag
 const helpers: Record<string, Directive<HTMLElement, any>> = {
 	// Set the focus on an element (if not an input, focus a child one)
 	Focus: (el, { value = true }) => value && (el.tagName === 'INPUT' ? el.focus() : el.querySelector('input')?.focus()),

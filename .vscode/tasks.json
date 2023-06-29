@@ -65,21 +65,21 @@
 		{
 			"type": "shell",
 			"problemMatcher": [],
-			"label": "NPM",
-			"detail": "npm ${input:cmd}",
+			"label": "NPM Install",
+			"detail": "npm install ${input:cmd}",
 			"options": { "cwd": "${workspaceFolder}/app" },
 			"command": "npm",
-			"args": ["${input:cmd}"],
+			"args": ["install", "${input:cmd}"],
 			"icon": { "id": "terminal", "color": "terminal.ansiYellow" }
 		},
 		{
 			"type": "shell",
 			"problemMatcher": [],
-			"label": "Composer",
-			"detail": "composer ${input:cmd}",
+			"label": "Composer Install",
+			"detail": "composer install ${input:cmd}",
 			"options": { "cwd": "${workspaceFolder}/app" },
 			"command": "composer",
-			"args": ["${input:cmd}"],
+			"args": ["install", "${input:cmd}"],
 			"icon": { "id": "terminal", "color": "terminal.ansiYellow" }
 		}
 	],
