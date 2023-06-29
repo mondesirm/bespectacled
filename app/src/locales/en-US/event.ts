@@ -3,6 +3,7 @@ export default {
 	title: 'Title',
 	type: 'Type',
 	price: 'Price',
+	description: 'Description',
 	src: 'Image',
 	venue: 'Venue',
 	artists: 'Artists',

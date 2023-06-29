@@ -25,7 +25,7 @@ App\Entity\Event:
     title: <($concerts[$current - 1]['title'])>
     type: <($concerts[$current - 1]['type'])>
     price: <($concerts[$current - 1]['price'])>
-    description: <paragraphs(5, true)>
+    description: <paragraphs(3, true)>
     src: <($concerts[$current - 1]['src'])>
     venue: "@venue<($concerts[$current - 1]['venue'])>"
     artists: ['@artist<current()>']
