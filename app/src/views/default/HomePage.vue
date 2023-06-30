@@ -1,4 +1,4 @@
-w<script setup>
+<script setup>
 import { onBeforeMount } from 'vue'
 
 const onIntersect = {

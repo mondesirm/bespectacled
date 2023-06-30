@@ -7,11 +7,13 @@ import { email, minLength, maxLength, required } from '@vuelidate/validators'
 
 import { useAuthStore, useUtilsStore } from '@/store'
 
-const $router = useRouter()
-const $store = useAuthStore()
-const $utilsStore = useUtilsStore()
+defineProps<{ scroll: number }>()
 
-const { user, error, violations } = storeToRefs($store)
+const router = useRouter()
+const auth = useAuthStore()
+const utilsStore = useUtilsStore()
+
+const { user, error, violations } = storeToRefs(auth)
 
 const parallax = new URL('@/assets/carnival.jpeg', import.meta.url).href
 
@@ -27,21 +29,21 @@ const rules = {
 
 const v$ = useVuelidate(rules, inputs)
 
-onBeforeMount(() => user?.value && $router.push('/profile'))
+onBeforeMount(() => user?.value && router.push('/profile'))
 
 const handleLogin = async (user: any) => {
 	if (!valid.value) return
 
-	$utilsStore.setLoading(true)
+	utilsStore.setLoading(true)
 
 	try {
-		await $store.login(user)
-		$utilsStore.showToast('Login successful!')
-		$router.push({ name: 'home' })
+		await auth.login(user)
+		utilsStore.showToast('Login successful!')
+		router.push({ name: 'home' })
 	} catch (err: any) {
-		$utilsStore.showToast(err, 'danger')
+		utilsStore.showToast(err, 'danger')
 	} finally {
-		$utilsStore.setLoading(false)
+		utilsStore.setLoading(false)
 	}
 }
 </script>
@@ -54,7 +56,7 @@ const handleLogin = async (user: any) => {
 		</div>
 	</v-parallax>
 
-	<v-card :disabled="$utilsStore.isLoading || !inputs">
+	<v-card :disabled="utilsStore.isLoading || !inputs">
 		<v-form ref="form" v-model="valid" @submit.prevent="handleLogin(inputs)">
 			<v-card-text>
 				<v-row>
@@ -90,13 +92,13 @@ const handleLogin = async (user: any) => {
 			</v-card-text>
 
 			<v-card-actions>
-				<v-btn color="primary" variant="tonal" @click="$router.push('/register')">No account yet?</v-btn>
+				<v-btn color="primary" variant="tonal" @click="router.push('/register')">No account yet?</v-btn>
 				<!-- <v-btn color="primary" variant="tonal" @click="$router.push('/forgot-password')">Forgot Password?</v-btn> -->
 
 				<v-spacer />
 
 				<v-btn :disabled="!v$.$anyDirty" color="primary" @click="form?.reset()" type="reset">Reset</v-btn>
-				<v-btn :loading="$utilsStore.isLoading" color="primary" variant="elevated" type="submit" @click="v$.$validate">Login</v-btn>
+				<v-btn :loading="utilsStore.isLoading" color="primary" variant="elevated" type="submit" @click="v$.$validate">Login</v-btn>
 			</v-card-actions>
 		</v-form>
 	</v-card>

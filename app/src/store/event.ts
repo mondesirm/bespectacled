@@ -54,7 +54,7 @@ export const useEventCreateStore = defineStore('eventCreate', {
 		violations: undefined
 	}),
 	actions: {
-		async create(payload: Event) {
+		async create(payload: Event<false>) {
 			this.setError(undefined)
 			this.setViolations(undefined)
 			this.toggleLoading()
@@ -271,7 +271,7 @@ export const useEventUpdateStore = defineStore('eventUpdate', {
 				if (error instanceof Error) this.setError(error.message)
 			}
 		},
-		async update(payload: Event) {
+		async update(payload: Event<false>) {
 			this.setError(undefined)
 			this.toggleLoading()
 

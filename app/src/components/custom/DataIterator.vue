@@ -4,6 +4,7 @@ import { computed, ref, toRefs } from 'vue'
 import { VuetifyOrder } from '@/types/list'
 
 const props = defineProps<{
+	for: string
 	items: any[]
 	page?: number
 	keys: string[]
@@ -14,6 +15,8 @@ const props = defineProps<{
 	itemsPerPage?: number
 	availability?: (item: any) => boolean
 }>()
+
+const emit = defineEmits<{ (e: 'refresh'): void }>()
 
 const { items, scroll } = toRefs(props)
 
@@ -72,6 +75,10 @@ const onIntersect = {
 					<v-btn icon="fa fa-sort-alpha-asc" color="secondary" value="asc" />
 					<v-btn icon="fa fa-sort-alpha-desc" color="secondary" value="desc" />
 				</v-btn-toggle>
+
+				<v-spacer />
+
+				<v-btn :icon="'fa fa-refresh' + (isLoading ? ' fa-spin' : '')" @click="emit('refresh')" />
 			</v-toolbar>
 		</template>
 
@@ -94,7 +101,7 @@ const onIntersect = {
 		</template>
 
 		<template #footer="{ prevPage, nextPage }">
-			<v-bottom-sheet :model-value="scrolled" :scrim="false" :retain-focus="false" scroll-strategy="reposition" inset persistent no-click-animation>
+			<v-bottom-sheet v-if="$route.name === props.for" :model-value="scrolled" :scrim="false" :retain-focus="false" scroll-strategy="reposition" inset persistent no-click-animation>
 				<v-sheet class="d-flex align-center justify-space-around pa-4 rounded backdrop snap">
 					<span class="grey--text">Showing {{ items.length }} item{{ items.length !== 1 && 's'}} with</span>
 

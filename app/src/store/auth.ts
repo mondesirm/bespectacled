@@ -108,7 +108,7 @@ export const useAuthStore = defineStore('auth', {
 				const data: User = await response.json()
 
 				this.toggleLoading()
-				this.setUser(data)
+				this.setUser({ ...this.user, ...data })
 			} catch (error) {
 				this.toggleLoading()
 
@@ -145,17 +145,16 @@ export const useAuthStore = defineStore('auth', {
 				this.toggleLoading()
 			}
 		},
-		logout() {
-			this.user = undefined
-			localStorage.removeItem('user')
-			router.push('/login')
+		logout(redirect = true) {
+			this.setUser(undefined)
+			redirect && router.push('/login')
 		},
 		profile(data = null) {
 			return axios.get(`${baseUrl}/profile`, { headers: headers(data) })
 		},
 		setUser(user: User | undefined) {
 			this.user = user
-			localStorage.setItem('user', JSON.stringify(user))
+			user ? localStorage.setItem('user', JSON.stringify(user)) : localStorage.removeItem('user')
 		},
 		toggleLoading() {
 			this.isLoading = !this.isLoading

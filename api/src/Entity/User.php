@@ -38,6 +38,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
         new GetCollection(
             uriTemplate: '/profile',
             controller: ProfileController::class,
+            security: "is_granted('PUBLIC_ACCESS')"
         ),
         new GetCollection(
             uriTemplate: '/artists',
@@ -45,24 +46,19 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
             security: "is_granted('PUBLIC_ACCESS')"
         ),
         new Get(
-            // uriTemplate: '/users/{id}',
             normalizationContext: [
                 'groups' => ['user:read'],
                 'access_control' => "is_granted('IS_AUTHENTICATED_FULLY') and object == user or is_granted('ROLE_ADMIN')"
             ]
         ),
         new Post(
-            // uriTemplate: '/users',
-            // validationContext: ['Default', 'user:write'],
-            security: "is_granted('PUBLIC_ACCESS')"
+            security: "is_granted('IS_AUTHENTICATED_FULLY') and object == user or is_granted('ROLE_ADMIN')"
         ),
         new Put(
-            // uriTemplate: '/users/{id}',
             denormalizationContext: ['groups' => ['user:write']],
             security: "is_granted('IS_AUTHENTICATED_FULLY') and object == user or is_granted('ROLE_ADMIN')"
         ),
         new Delete(
-            // uriTemplate: '/users/{id}',
             security: "is_granted('IS_AUTHENTICATED_FULLY') and object == user or is_granted('ROLE_ADMIN')"
         ),
         // "put-password" => [
@@ -96,7 +92,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->setUpdatedAt(new \DateTimeImmutable());
     }
 
-    #[Groups('user:read')]
+    #[Groups(['user:read', 'event:read', 'ticket:read', 'booking:read', 'transaction:read'])]
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
     private ?int $id = null;
 
@@ -124,7 +120,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     // #[Assert\NotBlank]
-    // #[Groups('user:write')]
+    #[Groups('user:write')]
     #[SerializedName('password')]
     private ?string $plainPassword = null;
 

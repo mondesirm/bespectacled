@@ -1,5 +1,5 @@
 parameters:
-  hash: '$2y$13$7bkYkOPNhCqyo/rJ2cdp4uQa/4No.RWsHn9pKDXQEJ6EjNCEfymTW'
+  hash: '$2y$13$tGIaqkEM.iVqquRMK43qyO4UN5hNvjIbIVEFOl2hGDHVcQgvMN/9u'
   artists:
     - { username: 'Billy Joel' }
     - { username: 'Taylor Swift' }
@@ -8,25 +8,25 @@ parameters:
 
 App\Entity\User:
   admin:
-    email: 'root1\@root.com'
+    email: 'admin\@bespectacled.com'
     roles: "[ROLE_ADMIN]"
     password: <{hash}>
     username: 'root1'
     enabled: true
   artist{1..4}:
-    email: 'artist<current()>\@root.com'
+    email: 'artist<current()>\@bespectacled.com'
     roles: "[ROLE_ARTIST]"
     password: <{hash}>
     username: <($artists[$current - 1]['username'])>
     enabled: true
   random{1..20}:
-    email: 'random<current()>\@root.com'
+    email: 'random<current()>\@bespectacled.com'
     roles: "[ROLE_ARTIST]"
     password: <{hash}>
     username: 'Random Artist <current()>'
     enabled: true
   user{1..5}:
-    email: 'user<current()>\@root.com'
+    email: 'user<current()>\@bespectacled.com'
     roles: "[ROLE_USER]"
     password: <{hash}>
     username: 'User <current()>'

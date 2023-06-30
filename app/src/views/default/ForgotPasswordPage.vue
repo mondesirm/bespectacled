@@ -8,11 +8,13 @@ import { email, maxLength, required } from '@vuelidate/validators'
 import { User } from '@/types/user'
 import { useAuthStore, useUtilsStore } from '@/store'
 
-const $router = useRouter()
-const $store = useAuthStore()
-const $utilsStore = useUtilsStore()
+defineProps<{ scroll: number }>()
 
-const { user, error, violations } = storeToRefs($store)
+const router = useRouter()
+const auth = useAuthStore()
+const utilsStore = useUtilsStore()
+
+const { user, error, violations } = storeToRefs(auth)
 
 const parallax = new URL('@/assets/carnival.jpeg', import.meta.url).href
 
@@ -29,17 +31,17 @@ const v$ = useVuelidate(rules, inputs)
 const handleForgotPassword = async (payload: Pick<User, 'email'>) => {
 	if (!valid.value) return
 
-	$utilsStore.setLoading(true)
+	utilsStore.setLoading(true)
 
 	try {
-		const data = await $store.forgotPassword(payload)
+		const data = await auth.forgotPassword(payload)
 		if (!data?.message) throw new Error('Something went wrong')
-		$utilsStore.showToast(data?.message)
-		$router.push({ name: 'login' })
+		utilsStore.showToast(data?.message)
+		router.push({ name: 'login' })
 	} catch (err: any) {
-		$utilsStore.showToast(err, 'danger')
+		utilsStore.showToast(err, 'danger')
 	} finally {
-		$utilsStore.setLoading(false)
+		utilsStore.setLoading(false)
 	}
 }
 </script>
@@ -52,7 +54,7 @@ const handleForgotPassword = async (payload: Pick<User, 'email'>) => {
 		</div>
 	</v-parallax>
 
-	<v-card :disabled="$utilsStore.isLoading || !inputs">
+	<v-card :disabled="utilsStore.isLoading || !inputs">
 		<v-form ref="form" v-model="valid" @submit.prevent="handleForgotPassword(inputs)">
 			<v-card-text>
 				<v-row>
@@ -74,12 +76,12 @@ const handleForgotPassword = async (payload: Pick<User, 'email'>) => {
 			</v-card-text>
 
 			<v-card-actions>
-				<v-btn color="primary" variant="tonal" @click="$router.push('/login')">Already verified?</v-btn>
+				<v-btn color="primary" variant="tonal" @click="router.push('/login')">Already verified?</v-btn>
 
 				<v-spacer />
 
 				<v-btn :disabled="!v$.$anyDirty" color="primary" @click="form?.reset()" type="reset">Reset</v-btn>
-				<v-btn :loading="$utilsStore.isLoading" color="primary" variant="elevated" type="submit" @click="v$.$validate">Send Email</v-btn>
+				<v-btn :loading="utilsStore.isLoading" color="primary" variant="elevated" type="submit" @click="v$.$validate">Send Email</v-btn>
 			</v-card-actions>
 		</v-form>
 	</v-card>

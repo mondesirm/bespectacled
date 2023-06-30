@@ -16,7 +16,13 @@ const eventCreateStore = useEventCreateStore()
 const { created, isLoading, violations, error } = storeToRefs(eventCreateStore)
 
 async function create(item: Event) {
-	await eventCreateStore.create(item)
+	await eventCreateStore.create({
+		...item,
+		venue: item.venue?.['@id'],
+		artists: item.artists?.map(artist => artist['@id'] as string),
+		schedules: item.schedules?.map(schedule => schedule['@id'] as string)
+	})
+
 	if (!created?.value) return
 	router.push({ name: 'EventUpdate', params: { id: created?.value?.id } })
 }

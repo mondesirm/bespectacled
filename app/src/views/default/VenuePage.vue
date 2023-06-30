@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
@@ -25,6 +27,7 @@ const store = useVenueShowStore()
 const { retrieved: item, isLoading, error } = storeToRefs(store)
 
 const tab = ref(0)
+const output = computed(() => DOMPurify.sanitize(marked(item?.value?.description || '<i class="text-muted">Nothing here yet...</i>', { mangle: false, headerIds: false })))
 
 const nav = computed(() => {
 	const index = items.value.findIndex((i: Venue) => i['@id'] === item?.value?.['@id'])
@@ -67,9 +70,9 @@ onBeforeUnmount(() => store.$reset())
 	<v-row v-if="item" class="mb-n10">
 		<v-col cols="12" sm="3" order-sm="1">
 			<v-card class="sticky-top sticky-nav overflow-x-hidden overflow-y-auto font-title text-center" rounded="lg" min-height="268" data-simplebar>
-				<v-card-title class="my-2" v-text="item?.name" />
+				<v-card-title class="my-2" v-text="item.name" />
 
-				<v-img v-if="typeof item?.src === 'string'" class="card-bg" :src="item.src" cover />
+				<v-img v-if="typeof item.src === 'string'" class="card-bg" :src="item.src" cover />
 
 				<v-card-title v-text="'Information'" />
 
@@ -77,7 +80,7 @@ onBeforeUnmount(() => store.$reset())
 					<tbody>
 						<tr v-for="field, i in general" :key="i">
 							<td>{{ t('venue.' + field) }}</td>
-							<td>{{ field === 'price' ? '$' : '' }}{{ item?.[field] }}</td>
+							<td>{{ field === 'price' ? '$' : '' }}{{ item[field] }}</td>
 						</tr>
 					</tbody>
 				</v-table>
@@ -86,9 +89,9 @@ onBeforeUnmount(() => store.$reset())
 
 		<v-col cols="12" sm="9">
 			<v-sheet rounded="lg">
-				<Toolbar color="primary-darken-1" :breadcrumb="[...breadcrumb, { title: item?.name ?? '', to: { name: 'venues' }}]" :is-loading="isLoading" :nav="nav" main @nav="silentPush" />
+				<Toolbar color="primary-darken-1" :breadcrumb="[...breadcrumb, { title: item.name ?? '', to: { name: 'venues' }}]" :is-loading="isLoading" :nav="nav" main @nav="silentPush" />
 
-				<v-card-text class="text-pre-wrap">{{ item?.description }}</v-card-text>
+				<v-card-text v-html="output" />
 
 				<v-tabs v-model="tab" color="primary" fixed-tabs>
 					<v-tab v-for="tab, i in tabs" :="tab" :value="i" />
@@ -96,10 +99,10 @@ onBeforeUnmount(() => store.$reset())
 
 				<v-window v-model="tab" class="bg-surface-darken-1">
 					<v-window-item value="0">
-						<v-row v-for="event, i in item?.events" :key="i" class="bg-surface-darken-1" style="min-height: 11em;">
+						<v-row v-for="event, i in item.events" :key="i" class="bg-surface-darken-1" style="min-height: 11em;">
 							<v-col cols="12" sm="10" order-sm="1">
 								<v-card-title class="font-title">
-									<router-link v-if="item?.id" :to="{ name: 'venue', params: { id: event.id }}">
+									<router-link v-if="item.id" :to="{ name: 'event', params: { id: event.id }}">
 										{{ event.title }}
 									</router-link>
 

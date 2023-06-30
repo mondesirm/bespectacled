@@ -88,8 +88,8 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 	<Toolbar :actions="selection.length > 0 ? ['add', 'delete'] : ['add']" :breadcrumb="breadcrumb" :is-loading="isLoading" @add="goToCreatePage" @delete="deleteSelected" />
 
 	<v-container fluid>
-		<v-alert v-if="deleted" type="success" class="mb-4" v-text="$t('itemDeleted', [deleted['type'].charAt(0).toUpperCase() + deleted['type'].slice(1), deleted['title']])" closable />
-		<v-alert v-if="mercureDeleted" type="success" class="mb-4" v-text="$t('itemDeletedByAnotherUser', [mercureDeleted['type'].charAt(0).toUpperCase() + mercureDeleted['type'].slice(1), mercureDeleted['title']])" closable />
+		<v-alert v-if="deleted" type="success" class="mb-4" v-text="$t('itemDeleted', [deleted['@type'], deleted['title']])" closable />
+		<v-alert v-if="mercureDeleted" type="success" class="mb-4" v-text="$t('itemDeletedByAnotherUser', [mercureDeleted['@type'], mercureDeleted['title']])" closable />
 		<v-alert v-if="error" type="error" class="mb-4" v-text="error" closable />
 
 		<v-data-table-server
@@ -158,7 +158,7 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 						<v-list-item v-if="router.hasRoute('UserShow')" v-for="artist, i in item.raw.artists" :key="i"
 							:title="artist.username"
 							:subtitle="artist.email"
-							@click="$router.hasRoute('UserShow') && $router.push({ name: 'UserShow', params: { id: artist.id } })"
+							@click="artist.id && $router.push({ name: 'UserShow', params: { id: artist.id } })"
 						/>
 
 						<v-list-item v-else v-for="artist, i in item.raw.artists" :key="-i"
@@ -181,7 +181,7 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 						<v-list-item v-if="router.hasRoute('ScheduleShow')" v-for="day, i in item.raw.schedules" :key="i"
 							:title="date.format(new Date(day.date), 'normalDateWithWeekday')"
 							:subtitle="day.times.join(' • ')"
-							@click="$router.push({ name: 'ScheduleShow', params: { id: day.id } })"
+							@click="day.id && $router.push({ name: 'ScheduleShow', params: { id: day.id } })"
 						/>
 
 						<v-list-item v-else v-for="day, i in item.raw.schedules" :key="-i"

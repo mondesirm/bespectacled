@@ -4,11 +4,11 @@ import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 
-import { useEventStore } from '@/store'
 import type { Event } from '@/types/event'
 import Form from '@/components/event/EventForm.vue'
 import Loading from '@/components/common/Loading.vue'
 import Toolbar from '@/components/common/Toolbar.vue'
+import { useEventStore, useUtilsStore } from '@/store'
 import { useBreadcrumb } from '@/composables/breadcrumb'
 import { useMercureItem } from '@/composables/mercureItem'
 
@@ -16,6 +16,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const breadcrumb = useBreadcrumb()
+const utilsStore = useUtilsStore()
 
 const { eventCreateStore, eventUpdateStore, eventDeleteStore } = useEventStore()
 
@@ -40,7 +41,17 @@ useMercureItem({ store: eventUpdateStore, deleteStore: eventDeleteStore, redirec
 
 await eventUpdateStore.retrieve(decodeURIComponent(route.params.id as string))
 
-const update = async (item: Event) => await eventUpdateStore.update(item)
+// ApiPlatform wants IRIs for relations
+const update = async (item: Event) => {
+	await eventUpdateStore.update({
+		...item,
+		venue: item.venue?.['@id'],
+		artists: item.artists?.map(artist => artist['@id'] as string),
+		schedules: item.schedules?.map(schedule => schedule['@id'] as string)
+	})
+
+	utilsStore.showToast('lol')
+}
 
 const deleteItem = async () => {
 	if (!item?.value) return eventUpdateStore.setError(t('itemNotFound'))
@@ -63,11 +74,11 @@ onBeforeUnmount(() => {
 
 		<v-alert v-if="created || updated" type="success" class="mb-4" closable>
 			<template v-if="created">
-				{{ $t('itemCreated', [created['@id']]) }}
+				{{ $t('itemCreated', [created['@type'], created['title']]) }}
 			</template>
 
 			<template v-else-if="updated">
-				{{ $t('itemUpdated', [updated['@id']]) }}
+				{{ $t('itemUpdated', [updated['@type'], updated['title']]) }}
 			</template>
 		</v-alert>
 

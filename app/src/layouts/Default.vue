@@ -12,7 +12,6 @@ import { useAuthStore, useEventListStore, useScheduleListStore, useUserListStore
 const date = useDate()
 const theme = useTheme()
 const router = useRouter()
-
 const utilsStore = useUtilsStore()
 
 const store = useAuthStore()
@@ -38,8 +37,6 @@ const search = ref('')
 const dialog = ref(false)
 const drawer = ref(false)
 const scrolled = computed(() => scroll.value > 50)
-
-// user.value = JSON.parse(localStorage.getItem('user') || 'null')
 
 const icons = {
 	broadway: 'fa fa-mask',
@@ -93,6 +90,8 @@ const sendRequest = async () => {
 	])
 }
 
+sendRequest()
+
 const debounce = (func: () => void, delay = 500) => {
 	const t = setTimeout(() => func(), delay)
 	return () => clearTimeout(t)
@@ -121,15 +120,13 @@ onBeforeMount(() => theme.global.name.value = utilsStore.dark ? 'dark' : 'light'
 onMounted(() => window.addEventListener('keydown', registerShortcuts))
 onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
 
-sendRequest()
-
 // watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 </script>
 
 <template>
 	<v-app :dark="utilsStore.dark">
 		<!-- <v-parallax style="background-size: cover;" :src="backgroundImage"> -->
-			<v-app-bar class="ps-4" :height="scrolled || router.currentRoute.value.name !== 'home' ? undefined : 100" :elevation="scrolled ? 4 : 0"  :color="scrolled ? 'primary' : 'transparent'" density="compact" v-scroll="(e: any) => scroll = e.target.scrollingElement.scrollTop" app flat>
+			<v-app-bar class="ps-4" :height="scrolled || router.currentRoute.value.name !== 'home' ? undefined : 100"  :color="scrolled ? 'primary' : 'transparent'" :elevation="scrolled ? 4 : 0" density="compact" v-scroll="(e: any) => scroll = e.target.scrollingElement.scrollTop" app flat>
 				<v-progress-linear class="position-fixed" :active="utilsStore.isLoading" color="white" indeterminate />
 
 				<template #prepend>
@@ -138,15 +135,15 @@ sendRequest()
 
 					<v-dialog v-model="dialog" width="500" height="90%" scrollable>
 						<template #activator="{ props }">
-							<v-btn v-bind="props" prepend-icon="fa fa-search" :size="scrolled || router.currentRoute.value.name !== 'home' ? undefined : 'x-large'">
+							<v-btn :="props" prepend-icon="fa fa-search" :size="scrolled || router.currentRoute.value.name !== 'home' ? undefined : 'x-large'">
 								Search
 								<div class="py-1 px-2 ms-2 border rounded text-disabled text-caption">Press /</div>
 							</v-btn>
 						</template>
 
-						<template #default="{ isActive }">
+						<template #="{ isActive }">
 							<v-card>
-								<v-toolbar color="primary" title="Search BeSpectacled">
+								<v-toolbar color="primary" title="Browse BeSpectacled">
 									<template #prepend>
 										<v-icon icon="fa fa-glasses ms-4" size="24" />
 									</template>
@@ -156,13 +153,13 @@ sendRequest()
 
 								<v-text-field
 									v-model.trim="search"
-									:autofocus="isActive.value"
 									class="flex-grow-0"
 									prepend-inner-icon="fa fa-search"
+									:autofocus="isActive.value"
 									name="search"
 									label="Looking for..."
 									density="comfortable"
-									placeholder="artists, events, etc..."
+									placeholder="artists, events, venues, schedules..."
 									hide-details
 								/>
 
@@ -263,7 +260,7 @@ sendRequest()
 			</v-snackbar>
 
 			<v-main style="--v-layout-top: 48px;">
-				<v-banner v-if="user && user?.roles.includes('ROLE_UNVERIFIED')" class="align-center" icon="$info" color="info" lines="one" sticky>
+				<v-banner v-if="user && user?.roles?.includes('ROLE_UNVERIFIED')" class="align-center" icon="$info" color="info" lines="one" sticky>
 					<v-banner-text>
 						You need to verify your email address before you can continue.
 					</v-banner-text>

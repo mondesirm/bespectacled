@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
@@ -26,6 +28,7 @@ const { retrieved: item, isLoading, error } = storeToRefs(store)
 
 const tab = ref(2)
 const menus = ref<{ venue: boolean, days: boolean[], times: Record<string, boolean> }>({ venue: false, days: [], times: {} })
+const output = computed(() => DOMPurify.sanitize(marked(item?.value?.description || '<i class="text-muted">Nothing here yet...</i>', { mangle: false, headerIds: false })))
 
 const nav = computed(() => {
 	const index = items.value.findIndex((i: Event) => i['@id'] === item?.value?.['@id'])
@@ -70,15 +73,15 @@ onBeforeUnmount(() => store.$reset())
 	<v-row v-if="item" class="mb-n10">
 		<v-col cols="12" sm="3" order-sm="1">
 			<v-card class="sticky-top sticky-nav overflow-x-hidden overflow-y-auto font-title text-center" rounded="lg" min-height="268" data-simplebar>
-				<v-card-title class="my-2" v-text="item?.title" />
+				<v-card-title class="my-2" v-text="item.title" />
 
-				<v-img v-if="typeof item?.src === 'string'" class="card-bg" :src="item.src" cover />
+				<v-img v-if="typeof item.src === 'string'" class="card-bg" :src="item.src" cover />
 
 				<v-table>
 					<tbody>
 						<tr v-for="field, i in general" :key="i">
 							<td>{{ t('event.' + field) }}</td>
-							<td>{{ field === 'price' ? '$' : '' }}{{ item?.[field] }}</td>
+							<td>{{ field === 'price' ? '$' : '' }}{{ item[field] }}</td>
 						</tr>
 					</tbody>
 				</v-table>
@@ -87,46 +90,46 @@ onBeforeUnmount(() => store.$reset())
 
 		<v-col cols="12" sm="9">
 			<v-sheet rounded="lg">
-				<Toolbar color="primary-darken-1" :breadcrumb="[...breadcrumb, { title: item?.title ?? '', to: { name: 'events' }}]" :is-loading="isLoading" :nav="nav" main @nav="silentPush" />
+				<Toolbar color="primary-darken-1" :breadcrumb="[...breadcrumb, { title: item.title ?? '', to: { name: 'events' }}]" :is-loading="isLoading" :nav="nav" main @nav="silentPush" />
 
-				<v-card-text class="text-pre-wrap">{{ item?.description }}</v-card-text>
+				<v-card-text v-html="output" />
 
 				<v-tabs v-model="tab" color="primary" :direction="$vuetify.display.xs ? 'vertical' : 'horizontal'" :fixed-tabs="$vuetify.display.smAndUp">
 					<v-tab v-for="tab, i in tabs" :="tab" :value="i" />
 				</v-tabs>
 
 				<v-window v-model="tab" class="bg-surface-darken-1">
-					<v-window-item v-if="item?.venue" value="0">
+					<v-window-item v-if="item.venue" value="0">
 						<v-row class="bg-surface-darken-1" style="min-height: 11em;">
 							<v-col cols="12" sm="8" order-sm="1">
 								<v-card-title class="font-title">
-									<router-link v-if="item?.id" :to="{ name: 'venue', params: { id: item?.venue.id }}">
-										{{ item?.venue.name }}
+									<router-link v-if="item.id" :to="{ name: 'venue', params: { id: item.venue.id }}">
+										{{ item.venue.name }}
 									</router-link>
 								</v-card-title>
 
 								<v-card-subtitle>
 									<v-icon icon="fa fa-map-marker-alt" size="md" />
-									{{ item?.venue.location }}
+									{{ item.venue.location }}
 								</v-card-subtitle>
 
-								<v-card-text :class="['mb-4 pb-0 text-pre-wrap clamp-fade', `clamp-${$vuetify.display.name}`]" v-html="item?.venue.description" />
+								<v-card-text :class="['mb-4 pb-0 text-pre-wrap clamp-fade', `clamp-${$vuetify.display.name}`]" v-html="item.venue.description" />
 							</v-col>
 
 							<v-col cols="12" sm="4">
-								<v-img :src="item?.venue.src" :alt="item?.venue.name" />
+								<v-img :src="item.venue.src" :alt="item.venue.name" />
 							</v-col>
 						</v-row>
 					</v-window-item>
 
 					<v-window-item value="1">
-						<v-list class="bg-surface-darken-1" :items="item?.artists" item-title="username" item-value="id" />
+						<v-list class="bg-surface-darken-1" :items="item.artists" item-title="username" item-value="id" />
 					</v-window-item>
 
 					<v-window-item value="2">
 						<v-table class="bg-surface-darken-1">
 							<tbody>
-								<template v-for="(day, i) in item?.schedules" :key="i">
+								<template v-for="(day, i) in item.schedules" :key="i">
 									<tr>
 										<td class="w-0 text-center">
 											<div class="mb-n2 text-overline">{{ (new Date(day.date)).toLocaleDateString($vuetify.locale.current, formats.weekday) }}</div>

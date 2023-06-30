@@ -46,7 +46,9 @@ const headers = [
 	{ title: t('actions'), key: 'actions', sortable: false },
 	{ title: t('user.username'), key: 'username', sortable: true },
 	{ title: t('user.email'), key: 'email', sortable: true },
-	{ title: t('user.artists'), key: 'artists', sortable: false }
+	{ title: t('user.roles'), key: 'roles', sortable: true },
+	{ title: t('user.events'), key: 'events', sortable: false },
+	{ title: t('user.enabled'), key: 'enabled', sortable: true }
 ]
 
 const updatePage = (newPage: number) => {
@@ -115,7 +117,11 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 			</template>
 
 			<template #item.email="{ item }">
-				${{ item.raw.email }}
+				<a :href="`mailto:${item.raw.email}`">{{ item.raw.email }}</a>
+			</template>
+
+			<template #item.roles="{ item }">
+				{{ item.raw.roles.join(', ') }}
 			</template>
 
 			<template #item.events="{ item }">
@@ -139,6 +145,10 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 						/>
 					</v-list>
 				</v-menu>
+			</template>
+
+			<template #item.enabled="{ item }">
+				<v-switch v-model="item.raw.enabled" color="success" />
 			</template>
 		</v-data-table-server>
 	</v-container>

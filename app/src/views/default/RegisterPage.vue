@@ -7,11 +7,13 @@ import { email, maxLength, minLength, required, sameAs } from '@vuelidate/valida
 import { useAuthStore, useUtilsStore } from '@/store'
 import { storeToRefs } from 'pinia'
 
-const $router = useRouter()
-const $store = useAuthStore()
-const $utilsStore = useUtilsStore()
+defineProps<{ scroll: number }>()
 
-const { user, error, violations } = storeToRefs($store)
+const router = useRouter()
+const auth = useAuthStore()
+const utilsStore = useUtilsStore()
+
+const { user, error, violations } = storeToRefs(auth)
 
 const parallax = new URL('@/assets/carnival.jpeg', import.meta.url).href
 
@@ -34,23 +36,23 @@ const rules = {
 
 const v$ = useVuelidate(rules, inputs)
 
-onBeforeMount(() => user?.value && $router.push('/profile'))
+onBeforeMount(() => user?.value && router.push('/profile'))
 
 const handleRegister = async (payload: any) => {
 	if (!valid.value) return
 
-	$utilsStore.setLoading(true)
+	utilsStore.setLoading(true)
 
 	try {
-		await $store.register(payload)
+		await auth.register(payload)
 		if (!user?.value) return
-		$utilsStore.showToast('Register successful!')
-		$router.push({ name: 'login' })
+		utilsStore.showToast('Register successful!')
+		router.push({ name: 'login' })
 		// $router.push({ name: 'home' })
 	} catch (err: any) {
-		$utilsStore.showToast('Account creation failed!', 'danger')
+		utilsStore.showToast('Account creation failed!', 'danger')
 	} finally {
-		$utilsStore.setLoading(false)
+		utilsStore.setLoading(false)
 	}
 }
 </script>
@@ -63,7 +65,7 @@ const handleRegister = async (payload: any) => {
 		</div>
 	</v-parallax>
 
-	<v-card :disabled="$utilsStore.isLoading || !inputs">
+	<v-card :disabled="utilsStore.isLoading || !inputs">
 		<v-form ref="form" v-model="valid" @submit.prevent="handleRegister(inputs)">
 			<v-card-text>
 				<v-row>
@@ -131,12 +133,12 @@ const handleRegister = async (payload: any) => {
 			</v-card-text>
 
 			<v-card-actions>
-				<v-btn color="primary" variant="tonal" @click="$router.push('/login')">Already registered?</v-btn>
+				<v-btn color="primary" variant="tonal" @click="router.push('/login')">Already registered?</v-btn>
 
 				<v-spacer />
 
 				<v-btn :disabled="!v$.$anyDirty" color="primary" @click="form?.reset()" type="reset">Reset</v-btn>
-				<v-btn :loading="$utilsStore.isLoading" color="primary" variant="elevated" type="submit" @click="v$.$validate">Register</v-btn>
+				<v-btn :loading="utilsStore.isLoading" color="primary" variant="elevated" type="submit" @click="v$.$validate">Register</v-btn>
 			</v-card-actions>
 		</v-form>
 	</v-card>

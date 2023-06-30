@@ -17,6 +17,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Schedule
 {
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
+    #[Groups(['schedule:read', 'event:read'])]
     private ?int $id = null;
 
     #[ORM\Column]

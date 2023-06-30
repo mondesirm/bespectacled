@@ -3,39 +3,44 @@ import { computed, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue
 import { useTheme } from 'vuetify'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
+import { useDate } from 'vuetify/labs/date'
 
 import { useAuthStore, useEventListStore, useScheduleListStore, useUserListStore, useUtilsStore, useVenueListStore } from '@/store'
 
-const $theme = useTheme()
-const $router = useRouter()
-const $store = useAuthStore()
-const $utilsStore = useUtilsStore()
+const date = useDate()
+const theme = useTheme()
+const router = useRouter()
+const utilsStore = useUtilsStore()
 
-const $userListStore = useUserListStore()
-const { items: users, totalItems: totalUsers, error: userError, isLoading: userIsLoading } = storeToRefs($userListStore)
+const store = useAuthStore()
+const { user } = storeToRefs(store)
 
-const $eventListStore = useEventListStore()
-const { items: events, totalItems: totalEvents, error: eventError, isLoading: eventIsLoading } = storeToRefs($eventListStore)
+const userListStore = useUserListStore()
+const { items: users, totalItems: totalUsers, error: userError, isLoading: userIsLoading } = storeToRefs(userListStore)
 
-const $venueListStore = useVenueListStore()
-const { items: venues, totalItems: totalVenues, error: venueError, isLoading: venueIsLoading } = storeToRefs($venueListStore)
+const eventListStore = useEventListStore()
+const { items: events, totalItems: totalEvents, error: eventError, isLoading: eventIsLoading } = storeToRefs(eventListStore)
 
-const $scheduleListStore = useScheduleListStore()
-const { items: schedules, totalItems: totalSchedules, error: scheduleError, isLoading: scheduleIsLoading } = storeToRefs($scheduleListStore)
+const venueListStore = useVenueListStore()
+const { items: venues, totalItems: totalVenues, error: venueError, isLoading: venueIsLoading } = storeToRefs(venueListStore)
 
+const scheduleListStore = useScheduleListStore()
+const { items: schedules, totalItems: totalSchedules, error: scheduleError, isLoading: scheduleIsLoading } = storeToRefs(scheduleListStore)
+
+const tab = ref<number | null>(null)
 const page = ref('1')
 const order = ref({})
 const search = ref('')
 const dialog = ref(false)
 const drawer = ref(false)
-const user = computed(() => $store.user)
+const total = computed(() => ({ Users: totalUsers.value, Events: totalEvents.value, Venues: totalVenues.value, Schedules: totalSchedules.value } as const))
 
 const categories = computed(() => [
 	{ name: 'Users', icon: 'fa fa-user-tie', to: '/users', key: 'username', children: users.value as [] },
 	{ name: 'Events', icon: 'fa fa-star', to: '/events', key: 'title', children: events.value as [] },
 	{ name: 'Venues', icon: 'fa fa-location-dot', to: '/venues', key: 'name', children: venues.value as [] },
 	{ name: 'Schedules', icon: 'fa fa-calendar-days', to: '/schedule', key: 'date', children: schedules.value as [] }
-])
+] as const)
 
 const filteredCategories = computed(() => {
 	const filtered = categories.value.filter(c => c.children.length > 0).map(c => {
@@ -64,11 +69,13 @@ const filteredCategories = computed(() => {
 })
 
 const sendRequest = async () => {
-	await $userListStore.getItems({ page: page.value, order: order.value })
-	await $eventListStore.getItems({ page: page.value, order: order.value })
-	await $venueListStore.getItems({ page: page.value, order: order.value })
-	await $scheduleListStore.getItems({ page: page.value, order: order.value })
+	await userListStore.getItems({ page: page.value, order: order.value })
+	await eventListStore.getItems({ page: page.value, order: order.value })
+	await venueListStore.getItems({ page: page.value, order: order.value })
+	await scheduleListStore.getItems({ page: page.value, order: order.value })
 }
+
+sendRequest()
 
 const debounce = (func: () => void, delay = 500) => {
 	const t = setTimeout(() => func(), delay)
@@ -81,65 +88,79 @@ const registerShortcuts = (e: KeyboardEvent) => {
 }
 
 const toggle = () => {
-	$utilsStore.toggle()
-	// $theme.global.name.value = $store.state.theme.dark ? 'dark' : 'light'
-	$theme.global.name.value = $utilsStore.dark ? 'dark' : 'light'
+	utilsStore.toggle()
+	theme.global.name.value = utilsStore.dark ? 'dark' : 'light'
 }
 
-const logout = () => $store.logout()
+const logout = () => store.logout()
 
-const resendVerificationEmail = () => {
-	// TODO $store.dispatch('auth/resendVerificationEmail')
-	alert('This feature has not been implemented yet.')
-}
-
-onBeforeMount(() => $theme.global.name.value = $utilsStore.dark ? 'dark' : 'light')
+onBeforeMount(() => theme.global.name.value = utilsStore.dark ? 'dark' : 'light')
 
 // Register shortcuts
 onMounted(() => window.addEventListener('keydown', registerShortcuts))
 onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
 
-watch(() => search.value, val => { val && debounce(() => sendRequest()) })
+// watch if route starts with events, venues, or users
+watch(() => router.currentRoute.value.path, val => {
+	console.log(val)
+	if (val.startsWith('/admin/events')) tab.value = 1
+	if (val.startsWith('/admin/venues')) tab.value = 2
+	if (val.startsWith('/admin/users')) tab.value = 3
+	if (val.startsWith('/admin/schedule')) tab.value = 4
+})
+// watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 </script>
 
 <template>
-	<v-app :dark="$utilsStore.dark">
-		<v-app-bar color="pink-accent-4" density="compact" app>
-			<template #prepend>
-				<v-app-bar-nav-icon @click.stop="drawer = !drawer" />
-				<v-btn prepend-icon="fa fa-glasses" color="white" @click="$router.push('/admin')">BeSpectacled Admin</v-btn>
+	<v-app :dark="utilsStore.dark">
+		<v-app-bar class="ps-4" color="pink-accent-4" density="compact" app flat>
+			<v-progress-linear class="position-fixed" :active="utilsStore.isLoading" color="white" indeterminate />
 
-				<v-dialog v-model="dialog" scrollable>
+			<template #prepend>
+				<v-app-bar-nav-icon class="me-4" :icon="'fa ' + (drawer ? 'fa-times' : 'fa-bars fa-fade')" @click="drawer = !drawer" />
+				<v-btn prepend-icon="fa fa-glasses" color="white" @click="router.push('/admin')">BeSpectacled Admin</v-btn>
+
+				<v-dialog v-model="dialog" width="500" height="90%" scrollable>
 					<template #activator="{ props }">
-						<v-btn prepend-icon="fa fa-search" v-bind="props">Search</v-btn>
+						<v-btn :="props" prepend-icon="fa fa-search">
+							Search
+							<div class="py-1 px-2 ms-2 border rounded text-disabled text-caption">Press /</div>
+						</v-btn>
 					</template>
 
-					<template #default="{ isActive }">
+					<template #="{ isActive }">
 						<v-card>
-							<v-toolbar color="primary" title="Search BeSpectacled">
+							<v-toolbar color="pink-accent-4" title="Manage BeSpectacled">
+								<template #prepend>
+									<v-icon icon="fa fa-glasses ms-4" size="24" />
+								</template>
+
 								<v-btn icon="fa fa-times" @click="isActive.value = false" />
 							</v-toolbar>
 
 							<v-text-field
 								v-model.trim="search"
 								prepend-inner-icon="fa fa-search"
-								density="comfortable"
-								label="Search for..."
-								name="search"
-								placeholder="e.g. artists, events, etc..."
-								hide-details
 								:autofocus="isActive.value"
+								name="search"
+								label="Looking for..."
+								density="comfortable"
+								placeholder="users, events, venues, schedules..."
+								hide-details
 							/>
 
 							<v-card-text>
 								<v-list v-if="search" lines="one" density="compact">
 									<template v-for="{ name, icon, to, key, children } in filteredCategories" :key="name">
 										<p><router-link class="text-high-emphasis font-weight-black text-uppercase" :to="'/admin' + to">Manage {{ name }}</router-link></p>
-										<v-list-item :prepend-icon="icon" v-for="child in children" :key="child" :title="child[key]" @click="$router.push('/admin' + to + '/show/' + child?.id); isActive.value = false" />
+										<v-list-item :prepend-icon="icon" v-for="child in children" :key="child" :title="child[key]" @click="router.push('/admin' + to + '/show/' + child?.id); isActive.value = false">
+											<v-list-item-title v-if="name === 'Schedules'">{{ date.format(new Date(child[key]), 'normalDateWithWeekday') }} - {{ child?.event?.title }}</v-list-item-title>
+											<v-list-item-title v-else>{{ child[key] }}</v-list-item-title>
+										</v-list-item>
 									</template>
 								</v-list>
 
-								<v-container v-else class="text-center">
+								<v-container v-else class="h-100 d-flex flex-column align-center justify-center">
 									<v-icon class="mb-6 text-disabled" icon="fab fa-searchengin" size="150" />
 									<v-list-subheader class="d-inline ">Your search results will appear here</v-list-subheader>
 								</v-container>
@@ -147,13 +168,35 @@ watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 						</v-card>
 					</template>
 				</v-dialog>
+
+				<v-menu v-if="$vuetify.display.smAndDown">
+					<template v-slot:activator="{ props }">
+						<v-btn v-bind="props" append-icon="fa fa-ellipsis-vertical" text="More" />
+					</template>
+
+					<v-sheet>
+						<v-tabs v-model="tab" direction="vertical">
+							<v-tab v-for="{ name, icon, to }, i in categories.slice(0, -1)" :key="i" :prepend-icon="icon" color="secondary" :value="name" @click="router.push('/admin' + to)">
+								<v-badge color="pink" :content="total[name]" location="top left" floating>
+									{{ name }}
+								</v-badge>
+							</v-tab>
+						</v-tabs>
+					</v-sheet>
+				</v-menu>
+
+				<v-tabs v-else v-model="tab">
+					<v-tab v-for="{ name, icon, to }, i in categories.slice(0, -1)" :key="i" :prepend-icon="icon" color="secondary" :value="name" @click="router.push('/admin' + to)">
+						{{ name }}
+					</v-tab>
+				</v-tabs>
 			</template>
 
 			<v-spacer></v-spacer>
 
-			<v-btn v-if="user" prepend-icon="fa fa-arrow-right" variant="outlined" @click="$router.push('/')">Return to Main Site</v-btn>
-			<v-btn v-else prepend-icon="fa fa-right-to-bracket" @click="$router.push('/login')">Login</v-btn>
-			<v-btn :icon="$theme.global.current.value.dark ? 'fa fa-sun' : 'fa fa-moon'" @click="toggle" />
+			<v-btn v-if="user" prepend-icon="fa fa-arrow-right" variant="outlined" @click="router.push('/')">Return to Main Site</v-btn>
+			<v-btn v-else prepend-icon="fa fa-right-to-bracket" @click="router.push('/login')">Login</v-btn>
+			<v-btn :icon="theme.global.current.value.dark ? 'fa fa-sun' : 'fa fa-moon'" @click="toggle" />
 		</v-app-bar>
 
 		<v-navigation-drawer v-model="drawer" expand-on-hover rail>
@@ -163,43 +206,37 @@ watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 					:subtitle="user?.email || 'john@doe.com'"
 				>
 					<template #append>
-						<v-btn variant="text" icon="fa fa-pen" @click="$router.push('/profile')" />
+						<v-btn variant="text" icon="fa fa-pen" @click="router.push('/profile')" />
 					</template>
 				</v-list-item>
 
-				<v-list-item prepend-icon="fa fa-id-card" title="Profile" @click="$router.push('/profile')" />
+				<v-list-item prepend-icon="fa fa-id-card" title="Profile" @click="router.push('/profile')" />
 				<v-list-item prepend-icon="fa fa-sign-out-alt" title="Logout" @click.prevent="logout" />
 			</v-list>
 
 			<v-list v-else>
-				<v-list-item prepend-icon="fa fa-sign-in-alt" title="Login" @click="$router.push('/login')" />
-				<v-list-item prepend-icon="fa fa-user-plus" title="Register" @click="$router.push('/register')" />
+				<v-list-item prepend-icon="fa fa-sign-in-alt" title="Login" @click="router.push('/login')" />
+				<v-list-item prepend-icon="fa fa-user-plus" title="Register" @click="router.push('/register')" />
 			</v-list>
 
 			<v-divider />
 
 			<v-list density="compact" nav>
-				<v-list-item v-for="{ name, icon, to } in categories" :key="name" :prepend-icon="icon" append-icon="fa fa-list" :title="`Manage ${name}`" @click="$router.push('/admin' + to)" />
+				<v-list-item v-for="{ name, icon, to } in categories" :key="name" :prepend-icon="icon" append-icon="fa fa-list" :title="`Manage ${name}`" @click="router.push('/admin' + to)" />
 			</v-list>
 
 			<v-list density="compact" nav>
-				<v-list-item v-for="{ name, icon, to } in categories" :key="name" :prepend-icon="icon" append-icon="fa fa-plus-circle" :title="`Create ${name.slice(0, -1)}`" @click="$router.push('/admin' + to + 'create')" />
+				<v-list-item v-for="{ name, icon, to } in categories" :key="name" :prepend-icon="icon" append-icon="fa fa-plus-circle" :title="`Create ${name.slice(0, -1)}`" @click="router.push('/admin' + to + 'create')" />
 			</v-list>
 		</v-navigation-drawer>
 
-		<v-main>
-			<v-banner v-if="user && user?.roles.includes('ROLE_UNVERIFIED')" class="align-center" lines="one" icon="$info" color="info" sticky>
-				<v-banner-text>
-					You need to verify your email address before you can continue.
-				</v-banner-text>
-
-				<template #actions>
-					<v-btn @click="resendVerificationEmail">Resend verification email</v-btn>
-				</template>
-			</v-banner>
-
-			<v-container>
-				<router-view />
+		<v-main style="--v-layout-top: 48px;">
+			<v-container class="mb-7">
+				<router-view v-slot="{ Component }">
+					<keep-alive>
+						<component :is="Component" :key="$route.fullPath"></component>
+					</keep-alive>
+				</router-view>
 			</v-container>
 		</v-main>
 	</v-app>
@@ -210,9 +247,13 @@ watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 	transition: all .2s ease;
 }
 
-.v-banner {
-	z-index: 2;
-	top: 3.4em !important;
+.v-toolbar__prepend {
+	margin-inline-start: 0 !important;
+}
+
+.v-navigation-drawer .v-list-item:not(:hover) .v-icon {
+	transition: opacity .4s ease;
+	opacity: 1;
 }
 
 .v-overlay__content {

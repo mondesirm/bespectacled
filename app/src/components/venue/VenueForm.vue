@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { ref, Ref, toRef } from 'vue'
+import { computed, ref, Ref, toRef, watch } from 'vue'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
+import { storeToRefs } from 'pinia'
+// import { debounce } from 'lodash-es'
 import { VForm } from 'vuetify/components'
 
+import { useEventStore } from '@/store'
 import type { Item } from '@/types/item'
 import type { Venue } from '@/types/venue'
 import type { SubmissionErrors } from '@/types/error'
+import { useMercureList } from '@/composables/mercureList'
 import FormRepeater from '@/components/common/FormRepeater.vue'
 
 const props = defineProps<{
@@ -14,8 +20,14 @@ const props = defineProps<{
 
 const violations = toRef(props, 'errors')
 
-const events = ref(null)
+const { eventDeleteStore, eventListStore } = useEventStore()
+const { items: events, totalItems: totalEvents, error: eventError, isLoading: eventIsLoading } = storeToRefs(eventListStore)
+
+const page = ref('1')
+const order = ref({})
+const search = ref({ event: '' })
 const item: Ref<Venue> = ref({} as Venue)
+const output = computed(() => DOMPurify.sanitize(marked(item.value.description || '<i class="text-muted">Preview your description here...</i>', { mangle: false, headerIds: false })))
 
 if (props.values) item.value = { ...props.values }
 
@@ -24,12 +36,28 @@ const emit = defineEmits<{ (e: 'submit', item: Venue): void }>()
 // TODO example to use for ref declarations
 const form: Ref<VForm | null> = ref(null)
 
+const sendRequest = async () => await eventListStore.getItems({ page: page.value, order: order.value })
+
+useMercureList({ store: eventListStore, deleteStore: eventDeleteStore })
+
+const debounce = (func: () => void, delay = 500) => {
+	const t = setTimeout(() => func(), delay)
+	return () => clearTimeout(t)
+}
+
 const resetForm = () => {
 	if (!form.value) return
 	form.value.reset()
 }
 
-// TODO use vue-validate and use assertions in Entities
+watch(search, val => {
+	if (val.event) {
+		page.value = '1'
+		order.value = {}
+	}
+})
+
+watch(() => search.value.event, val => { val && !item.value.events?.some(_ => _.title === val) && debounce(() => sendRequest()) })
 </script>
 
 <template>
@@ -103,7 +131,7 @@ const resetForm = () => {
 				/>
 			</v-col>
 
-			<v-col cols="12">
+			<v-col cols="12" sm="6" md="6">
 				<!-- TODO use v-file-input instead -->
 				<v-text-field
 					v-model="item.src"
@@ -115,6 +143,43 @@ const resetForm = () => {
 					append-inner-icon="fa fa-trash text-red"
 					@click:append-inner="item.src = undefined"
 				/>
+			</v-col>
+
+			<!-- Automatically created, admin will edit later if needed -->
+			<!-- <v-col cols="12">
+				<v-text-field
+					v-model="item.slug"
+					autofocus
+					autocapitalize
+					prepend-icon="fa fa-link text-secondary"
+					:label="$t('event.slug')"
+					:error="Boolean(violations?.slug)"
+					:error-messages="violations?.slug"
+					required
+					clearable
+				/>
+			</v-col> -->
+
+			<v-col cols="12">
+				<v-row>
+					<v-col class="pe-0" cols="12" sm="6">
+						<v-textarea
+							v-model="item.description"
+							class="input"
+							:="{ ['prepend-' + ($vuetify.display.smAndUp ? '' : 'inner-') + 'icon']: 'fa fa-text-width text-white'}"
+							:label="$t('event.description')"
+							:error="Boolean(violations?.description)"
+							:error-messages="violations?.description"
+							@update:model-value="item.description = DOMPurify.sanitize($event)"
+						/>
+					</v-col>
+
+					<v-col class="mb-5 pe-0" cols="12" sm="6">
+						<v-card class="fill-height">
+							<v-card-text v-html="output" />
+						</v-card>
+					</v-col>
+				</v-row>
 			</v-col>
 
 			<!-- TODO add :items="events" -->

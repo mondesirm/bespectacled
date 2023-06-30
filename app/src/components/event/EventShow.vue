@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref, watchEffect } from 'vue'
+import { marked } from 'marked'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useDate } from 'vuetify/labs/date'
@@ -72,8 +73,25 @@ const goToRelationUpdatePage = (model: 'User' | 'Schedule', relation: Item) => r
 
 const detachRelation = async (model: 'User' | 'Schedule', relation: User | Schedule) => {
 	if (!item) return
-	if (model === 'User') await eventUpdateStore.update({ ...item.value, artists: item.value?.artists.filter(_ => _.id !== relation.id) } as Event)
-	if (model === 'Schedule') await eventUpdateStore.update({ ...item.value, schedules: item.value?.schedules.filter(_ => _.id !== relation	.id) } as Event)
+
+	if (model === 'User') {
+		await eventUpdateStore.update({
+			...item.value,
+			venue: item.value?.venue?.['@id'],
+			artists: item.value?.artists?.filter(_ => _.id !== relation.id).map(artist => artist['@id']),
+			schedules: item.value?.schedules?.map(schedule => schedule['@id'])
+		} as Event<false>)
+	}
+
+	if (model === 'Schedule') {
+		await eventUpdateStore.update({
+			...item.value,
+			venue: item.value?.venue?.['@id'],
+			artists: item.value?.artists?.map(artist => artist['@id']),
+			schedules: item.value?.schedules?.filter(_ => _.id !== relation	.id).map(schedule => schedule['@id'])
+		} as Event<false>)
+	}
+
 	sendRequest()
 }
 
@@ -142,6 +160,13 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 						<tr>
 							<td>{{ $t('event.price') }}</td>
 							<td>${{ item.price }}</td>
+						</tr>
+
+						<tr>
+							<td>{{ $t('event.description') }}</td>
+							<td>
+								<v-card-text v-html="marked(item.description)" />
+							</td>
 						</tr>
 					</tbody>
 				</v-table>

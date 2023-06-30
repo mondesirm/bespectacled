@@ -1,12 +1,11 @@
 @host = https://localhost:80
 @baseUrl = {{host}}/api
-@email = "root1@root.com"
+@email = "artist1@bespectacled.com"
 @password = "password"
 
 ### Login
 # @name login
 POST {{baseUrl}}/login
-accept: application/json
 Content-Type: application/json
 
 {
@@ -20,8 +19,20 @@ Content-Type: application/json
 
 ### Refresh token
 # @name refresh
-GET {{host}}/refresh-token
-accept: application/json
+POST {{baseUrl}}/token/refresh
+Content-Type: application/json
+
+{
+	"refresh_token": "d1639da12c54725bd7d1af0105d75dfa614a59bd964bb4c22e04a4833a479afa0895c0d4d8769d9080ca66bcafc5cfb97cbf6f5476c909a8cc3dc6c40e04b2f7"
+}
+###
+
+@token = {{refresh.response.body.token}}
+@refresh_token = {{refresh.response.body.refresh_token}}
+
+### Get current user
+GET {{baseUrl}}/profile
+accept: application/ld+json
 Authorization: Bearer {{token}}
 ###
 
@@ -55,12 +66,6 @@ Content-Type: application/json
 	"password": "Password1",
 	"confirmPassword": "tests"
 }
-
-### Get current user
-GET {{baseUrl}}/profile
-accept: application/ld+json
-Authorization: Bearer {{token}}
-###
 
 ### Get user
 GET {{baseUrl}}/users/1

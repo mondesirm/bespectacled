@@ -1,49 +1,56 @@
-<script setup>
-import { ref } from 'vue'
-import stadium from '@/assets/stadium.jpeg'
+<script setup lang="ts">
+import { onBeforeUnmount, ref, watchEffect } from 'vue'
+import { storeToRefs } from 'pinia'
 
-const model = ref(null)
+import UserCard from '@/components/custom/UserCard.vue'
+import { useMercureList } from '@/composables/mercureList'
+import DataIterator from '@/components/custom/DataIterator.vue'
+import { useUserDeleteStore, useUserListStore, useUtilsStore } from '@/store'
 
-const onIntersect = {
-	handler: (b, e) => {
-		e[0].target.style.transition = 'opacity .3s ease'
-		e[0].target.style.opacity = e[0].intersectionRatio
-	},
-	options: { threshold: [0, .25, .5, .75, 1] }
+defineProps<{ scroll: number }>()
+
+const utilsStore = useUtilsStore()
+const deleteStore = useUserDeleteStore()
+
+const store = useUserListStore()
+const { items, isLoading } = storeToRefs(store)
+
+const page = ref('1')
+const order = ref({})
+const keys = ['username', 'events']
+
+const sendRequest = () => {
+	store.getArtists({ page: page.value, order: order.value }).then(() => {
+		// Sort artists by how many events they star in
+		items.value.sort((a, b) => b.events.length - a.events.length)
+	})
 }
+
+useMercureList({ store, deleteStore })
+
+sendRequest()
+
+onBeforeUnmount(() => deleteStore.$reset())
+watchEffect(() => utilsStore.setLoading(isLoading.value))
 </script>
 
 <template>
-	<v-parallax :src="stadium">
-		<div class="d-flex flex-column fill-height justify-center align-center text-white">
-			<h1 class="text-h4 font-weight-thin mb-4">BeSpectacled</h1>
-			<h4>Book tickets for events, concerts, and more!</h4>
-
-			<v-btn
-				color="primary"
-				prepend-icon="fa fa-fade fa-computer-mouse"
-				append-icon="fa fa-bounce fa-arrow-down"
-				size="x-large"
-				v-scroll-to="'.v-row'"
-			/>
-		</div>
-	</v-parallax>
-
-	<v-row>
-		<v-col v-for="n in 9" :key="n" cols="4">
-			<v-card height="200" v-intersect="onIntersect" />
+	<DataIterator
+		#="props"
+		class="mt-n4"
+		for="artists"
+		:keys="keys"
+		:items="items"
+		:scroll="scroll"
+		sortKey="events"
+		sortOrder="desc"
+		:itemsPerPage="12"
+		:isLoading="isLoading"
+		:availability="_ => _.events.length > 0"
+		@refresh="sendRequest"
+	>
+		<v-col v-if="!isLoading" v-for="_ in props.items" :key="_.raw.id" class="text-center snap" v-intersect="props.onIntersect">
+			<UserCard :user="_.raw" />
 		</v-col>
-	</v-row>
+	</DataIterator>
 </template>
-
-<style scoped>
-.v-parallax {
-	height: calc(100vh - (48px + 16px * 2));
-	margin-bottom: 16px;
-}
-
-.v-parallax .v-btn {
-	position: absolute;
-	bottom: 16px;
-}
-</style>

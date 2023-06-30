@@ -1,3 +1,5 @@
+import Vue from 'vue'
+import axios from 'axios'
 import { createRouter, createWebHistory } from 'vue-router'
 
 import user from './user'
@@ -29,7 +31,7 @@ const routes = [
 			{ path: '', name: 'home', component: () => import('@/views/default/HomePage.vue') },
 
 			{ path: 'artists', name: 'artists', component: () => import('@/views/default/ArtistsPage.vue') },
-			{ path: 'artists/:id', name: 'artist', component: () => import('@/views/default/ArtistPage.vue'), meta: { breadcrumb: [{ title: 'Artists', to: { name: 'artists' } }] } },
+			{ path: 'artists/:id', name: 'artist', component: () => import('@/views/default/ProfilePage.vue'), meta: { breadcrumb: [{ title: 'Artists', to: { name: 'artists' } }] } },
 			{ path: 'events', name: 'events', component: () => import('@/views/default/EventsPage.vue') },
 			{ path: 'events/:id', name: 'event', component: () => import('@/views/event/ViewShow.vue'), meta: { breadcrumb: [{ title: 'Events', to: { name: 'events' } }] } },
 			{ path: 'venues', name: 'venues', component: () => import('@/views/default/VenuesPage.vue') },
@@ -39,7 +41,7 @@ const routes = [
 
 			{ path: 'orders', name: 'orders', component: () => import('@/views/default/BlankPage.vue'), meta: { requires: 'auth' } },
 			{ path: 'tickets', name: 'tickets', component: () => import('@/views/default/BlankPage.vue'), meta: { requires: 'auth' } },
-			{ path: 'profile', name: 'profile', component: () => import('@/views/default/ProfilePage.vue'), meta: { requires: 'auth' } },
+			{ path: 'profile', name: 'profile', component: () => import('@/views/default/ProfilePage.vue'), meta: { requires: 'auth', breadcrumb: [{ title: 'Profile', to: { name: 'profile' } }] } },
 
 			{ path: 'login', name: 'login', component: () => import('@/views/default/LoginPage.vue'), meta: { requires: 'guest' } },
 			{ path: 'register', name: 'register', component: () => import('@/views/default/RegisterPage.vue'), meta: { requires: 'guest' } },
@@ -52,9 +54,33 @@ const routes = [
 
 const router = createRouter({ history: createWebHistory(), routes })
 
-export default router
+// axios.interceptors.response.use(res => {
+// 	console.log(res)
+// 	if (res.status === 200) console.log('code 200', res.status)
+// 	return Promise.resolve(res)
+// }, err => {
+// 	console.log('axios.interceptors.response', err.response.status)
+// 	// /* THIS WORKS BUT BREAKS THE LOGIN ERROR HANDLING */
+// 	if (err.response.status === 401) console.log('token expired', err.response)
+// 	return Promise.reject(err)
+// })
+
+// Vue.http.interceptors.push((request, next)  => {
+// 	request.headers['Authorization'] = headers().Authorization
+// 	next((response) => {
+// 		if(response.status == 401 ) {
+// 			auth.logout()
+// 			router.push('/login?unauthorized=1')
+// 		}
+// 	})
+// })
+
+// router.onError(err => {
+// 	console.log('router.onError', err)
+// })
 
 router.beforeEach((to, from, next) => {
+	// console.log('router.beforeEach')
 	const auth = useAuthStore()
 
 	if (!to.meta?.requires) next()
@@ -63,3 +89,5 @@ router.beforeEach((to, from, next) => {
 	else if (to.meta.requires == 'guest' && auth?.user?.token) next('/')
 	else next()
 })
+
+export default router

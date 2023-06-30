@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 
 import api from '@/utils/api'
-import headers from './headers'
 import type { User } from '@/types/user'
 import type { ListParams } from '@/types/list'
 import { SubmissionError } from '@/utils/error'
@@ -154,7 +153,7 @@ export const useUserListStore = defineStore('userList', {
 			this.toggleLoading()
 
 			try {
-				const response = await api('users', { params, authorization: headers().Authorization })
+				const response = await api('users', { params })
 				const data: PagedCollection<User> = await response.json()
 				const hubUrl = extractHubURL(response)
 
