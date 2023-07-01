@@ -177,6 +177,7 @@ watch(() => search.value.schedule, val => { val && !item.value.schedules?.some(_
 					append-icon="fa fa-plus-circle text-success"
 					:items="venues"
 					item-title="name"
+					item-value="@id"
 					:error="Boolean(violations?.venue)"
 					:error-messages="violations?.venue"
 					:label="$t('event.venue')"
@@ -203,6 +204,7 @@ watch(() => search.value.schedule, val => { val && !item.value.schedules?.some(_
 					append-icon="fa fa-plus-circle text-success"
 					:items="users"
 					item-title="username"
+					item-value="@id"
 					:error="Boolean(violations?.artists)"
 					:error-messages="violations?.artists"
 					:label="$t('event.artists')"
@@ -213,6 +215,7 @@ watch(() => search.value.schedule, val => { val && !item.value.schedules?.some(_
 					clearable
 					hide-no-data
 					return-object
+					closable-chips
 					auto-select-first
 					@click:append="$router.push({ name: 'UserCreate' })"
 				/>
@@ -224,8 +227,9 @@ watch(() => search.value.schedule, val => { val && !item.value.schedules?.some(_
 					v-model:search="search.schedule"
 					prepend-icon="fa fa-clock"
 					append-icon="fa fa-plus-circle text-success"
-					:items="schedules"
+					:items="schedules.filter(s => s.event === undefined)"
 					item-title="date"
+					item-value="@id"
 					:error="Boolean(violations?.schedules)"
 					:error-messages="violations?.schedules"
 					:label="$t('event.schedules')"
@@ -235,9 +239,18 @@ watch(() => search.value.schedule, val => { val && !item.value.schedules?.some(_
 					clearable
 					hide-no-data
 					return-object
+					closable-chips
 					auto-select-first
 					@click:append="$router.push({ name: 'ScheduleCreate' })"
-				/>
+				>
+					<template v-slot:item="{ props, item }">
+						<v-list-item
+							v-bind="props"
+							:title="item?.raw?.date"
+							:subtitle="item?.raw?.times.join(' • ')"
+						></v-list-item>
+					</template>
+				</v-autocomplete>
 			</v-col>
 		</v-row>
 

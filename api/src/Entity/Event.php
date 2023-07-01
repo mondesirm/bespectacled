@@ -25,44 +25,44 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 class Event
 {
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
-    #[Groups(['event:read', 'venue:read', 'user:read', 'schedule:read'])]
+    #[Groups(['event:read', 'venue:read', 'user:read', 'artist:read', 'schedule:read'])]
     private ?int $id = null;
 
     #[Gedmo\Slug(fields: ['title'])]
     #[ORM\Column(length: 128, unique: true)]
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'schedule:read'])]
+    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read'])]
     private ?string $slug = null;
 
     #[ORM\Column]
     #[Assert\NotBlank]
     #[Assert\Length(min: 3, max: 255)]
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'schedule:read'])]
+    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read'])]
     private ?string $title = null;
 
     #[Assert\NotBlank]
     #[ORM\Column(length: 255)]
     #[Assert\Length(min: 3, max: 255)]
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'schedule:read'])]
+    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read'])]
     private ?string $type = null;
 
     #[Assert\NotBlank]
     #[Assert\Positive]
     #[ORM\Column(type: 'float')]
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'schedule:read'])]
+    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read'])]
     private ?int $price = null;
 
     #[ORM\Column(type: 'text')]
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'schedule:read'])]
+    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read'])]
     private ?string $description = null;
 
     #[ORM\Column]
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'schedule:read'])]
+    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read'])]
     private ?string $src = null;
 
     #[ORM\JoinColumn]
     #[Assert\NotBlank]
     #[ORM\ManyToOne(inversedBy: 'events')]
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'schedule:read'])]
+    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read', 'schedule:read'])]
     private ?Venue $venue = null;
 
     #[Assert\NotBlank]
@@ -72,7 +72,7 @@ class Event
     #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'events')]
     private Collection $artists;
 
-    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read'])]
+    #[Groups(['event:read', 'event:write', 'venue:read', 'user:read', 'artist:read'])]
     #[ORM\OneToMany(targetEntity: Schedule::class, mappedBy: 'event', orphanRemoval: true)]
     private Collection $schedules;
 

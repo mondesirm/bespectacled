@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref, watchEffect } from 'vue'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useDate } from 'vuetify/labs/date'
@@ -165,7 +166,7 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 						<tr>
 							<td>{{ $t('event.description') }}</td>
 							<td>
-								<v-card-text v-html="marked(item.description)" />
+								<v-card-text v-html="DOMPurify.sanitize(marked(item.description || '<i>Nothing here yet...</i>', { mangle: false, headerIds: false }))" />
 							</td>
 						</tr>
 					</tbody>
@@ -223,6 +224,13 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 						<tr>
 							<td>{{ $t('venue.seats') }}</td>
 							<td>{{ item.venue.seats }}</td>
+						</tr>
+
+						<tr>
+							<td>{{ $t('venue.description') }}</td>
+							<td>
+								<v-card-text v-html="DOMPurify.sanitize(marked(item.venue.description || '<i>Nothing here yet...</i>', { mangle: false, headerIds: false }))" />
+							</td>
 						</tr>
 					</tbody>
 				</v-table>
@@ -293,7 +301,7 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 						</v-btn>
 					</v-col>
 
-					<v-hover v-for="day, i in item?.schedules" :key="i" #="{ isHovering, props }" close-delay="200">
+					<v-hover v-for="day, i in item?.schedules" :key="i" #="{ isHovering, props }" close-delay="2000">
 						<v-col :="props" cols="12" sm="6" md="4">
 							<v-table>
 								<thead>

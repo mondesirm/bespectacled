@@ -24,7 +24,7 @@ const form = ref<null | typeof import('vuetify/components')['VForm']>(null)
 
 const rules = {
 	email: { required, email, maxLength: maxLength(50) },
-	password: { required, minLength: minLength(6), maxLength: maxLength(40) }
+	password: { required, minLength: minLength(8), maxLength: maxLength(40) }
 }
 
 const v$ = useVuelidate(rules, inputs)

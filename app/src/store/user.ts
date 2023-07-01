@@ -249,6 +249,24 @@ export const useUserShowStore = defineStore('userShow', {
 				if (error instanceof Error) this.setError(error.message)
 			}
 		},
+		async getProfile() {
+			this.toggleLoading()
+
+			try {
+				const response = await api('profile')
+				const data: User = await response.json()
+				const hubUrl = extractHubURL(response)
+
+				this.toggleLoading()
+				this.setRetrieved(data)
+
+				if (hubUrl) this.setHubUrl(hubUrl)
+			} catch (error) {
+				this.toggleLoading()
+
+				if (error instanceof Error) this.setError(error.message)
+			}
+		},
 		toggleLoading() {
 			this.isLoading = !this.isLoading
 		},

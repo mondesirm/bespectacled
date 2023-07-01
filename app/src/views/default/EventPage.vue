@@ -113,7 +113,7 @@ onBeforeUnmount(() => store.$reset())
 									{{ item.venue.location }}
 								</v-card-subtitle>
 
-								<v-card-text :class="['mb-4 pb-0 text-pre-wrap clamp-fade', `clamp-${$vuetify.display.name}`]" v-html="item.venue.description" />
+								<v-card-text :class="['mb-4 pb-0 clamp-fade', `clamp-${$vuetify.display.name}`]" v-html="DOMPurify.sanitize(marked(item.venue.description || '<i>Nothing here yet...</i>', { mangle: false, headerIds: false }))" />
 							</v-col>
 
 							<v-col cols="12" sm="4">
@@ -123,7 +123,7 @@ onBeforeUnmount(() => store.$reset())
 					</v-window-item>
 
 					<v-window-item value="1">
-						<v-list class="bg-surface-darken-1" :items="item.artists" item-title="username" item-value="id" />
+						<v-list class="bg-surface-darken-1" :items="item.artists" item-title="username" item-value="id" @click:select="val => $router.push({ name: 'artist', params: { id: val.id as string } })" />
 					</v-window-item>
 
 					<v-window-item value="2">

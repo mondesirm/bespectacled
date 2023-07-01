@@ -1,54 +1,68 @@
 <script setup lang="ts">
-import { onBeforeMount, onBeforeUnmount, reactive, ref } from 'vue'
+import { computed, onBeforeMount, onBeforeUnmount, reactive, ref } from 'vue'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
+import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
-import { useRouter } from 'vue-router'
 import { useVuelidate } from '@vuelidate/core'
+import { useRoute, useRouter } from 'vue-router'
 import { email, maxLength, minLength, required } from '@vuelidate/validators'
 
+import { User } from '@/types/user'
 import Toolbar from '@/components/common/Toolbar.vue'
-import { useAuthStore, useUserShowStore, useUtilsStore } from '@/store'
 import { useBreadcrumb } from '@/composables/breadcrumb'
+import { useMercureItem } from '@/composables/mercureItem'
+import { useAuthStore, useUserDeleteStore, useUserListStore, useUserShowStore, useUtilsStore } from '@/store'
 
-defineProps<{ scroll: number }>()
-
+const { t } = useI18n()
+const route = useRoute()
 const router = useRouter()
 const breadcrumb = useBreadcrumb()
 const utilsStore = useUtilsStore()
 
 const auth = useAuthStore()
-const { user, isLoading, error, violations } = storeToRefs(auth)
+const { user, isLoading: authIsLoading, error: authError, violations } = storeToRefs(auth)
+
+const deleteStore = useUserDeleteStore()
+const { error: deleteError } = storeToRefs(deleteStore)
+
+const userListStore = useUserListStore()
+const { items } = storeToRefs(userListStore)
 
 const store = useUserShowStore()
-const { retrieved: item, isLoading: userIsLoading, error: userError } = storeToRefs(store)
+const { retrieved: item, isLoading, error } = storeToRefs(store)
 
 const tab = ref(0)
 const valid = ref(true)
 const showPassword = ref(false)
 const form = ref<null | typeof import('vuetify/components')['VForm']>(null)
+// const output = computed(() => DOMPurify.sanitize(marked(item?.value?.description || '<i class="text-muted">Nothing here yet...</i>', { mangle: false, headerIds: false })))
+
+const nav = computed(() => {
+	const index = items.value.findIndex((i: User) => i['@id'] === item?.value?.['@id'])
+
+	return {
+		prev: index > 0 ? items.value[index - 1] : null,
+		next: index < items.value.length - 1 ? items.value[index + 1] : null
+	}
+})
 
 const inputs = reactive({
 	username: '',
-	email: '',
-	password: '',
-	confirmPassword: '',
-	...user?.value
+	email: ''
 })
 
 const rules = {
 	username: { required, minLength: minLength(3), maxLength: maxLength(20) },
-	email: { required, email, maxLength: maxLength(50) },
-	password: { required, minLength: minLength(7), maxLength: maxLength(40) },
-	// sameAs validator is broken for some reason so I'm using a custom one instead
-	confirmPassword: { required, sameAs: {
-		$validator: (value: string) => value === inputs.password,
-		$message: 'Passwords do not match'
-	} }
+	email: { required, email, maxLength: maxLength(50) }
 }
 
 const tabs = [
 	{ text: 'general', 'prepend-icon': 'fa fa-info' },
 	{ text: 'events', 'prepend-icon': 'fa fa-star' }
 ]
+
+if (route.name !== 'profile') tabs.shift()
 
 const icons: Record<string, string> = {
 	broadway: 'fa fa-mask',
@@ -58,6 +72,25 @@ const icons: Record<string, string> = {
 
 const v$ = useVuelidate(rules, inputs)
 
+useMercureItem({ store, deleteStore, redirectRouteName: 'artists' })
+
+if (router.currentRoute.value.name === 'profile') {
+	store.setRetrieved(user?.value as User)
+	await store.getProfile()
+	inputs.username = user?.value?.username ?? ''
+	inputs.email = user?.value?.email ?? ''
+} else if (router.currentRoute.value.name === 'artist' && route.params.id) {
+	await store.retrieve(decodeURIComponent(String(route.params.id)))
+}
+
+const silentPush = async (id: string) => {
+	await store.retrieve(id) // if we don't do this, the navigation won't work as intended
+	router.push({ name: 'event', params: { id } })
+
+	// if we use this, it will be smoother but won't update the last breadcrumb
+	// history.pushState(null, '', route.path.replace(route.params.id as string, id))
+}
+
 const handleEditProfile = async (payload: any) => {
 	if (!valid.value) return
 
@@ -65,7 +98,7 @@ const handleEditProfile = async (payload: any) => {
 
 	try {
 		await auth.editProfile(payload)
-		if (!user?.value) return
+		if (!item?.value) return
 		utilsStore.showToast('Profile updated!')
 		// router.push({ name: 'login' })
 		// router.push({ name: 'home' })
@@ -76,21 +109,22 @@ const handleEditProfile = async (payload: any) => {
 	}
 }
 
-onBeforeMount(() => !user?.value && router.push('/login'))
+onBeforeMount(() => !item?.value && route.name === 'profile' && router.push('/login'))
 onBeforeUnmount(() => store.$reset())
 </script>
 
 <template>
-	<v-alert v-if="error || userError" type="error" class="mb-4" v-text="error || userError" closable />
+	<v-alert v-if="error || authError" type="error" class="mb-4" v-text="error || authError" closable />
 
-	<Toolbar color="primary-darken-1" :breadcrumb="breadcrumb" :is-loading="isLoading" main />
+	<Toolbar v-if="$route.name === 'profile'" color="primary-darken-1" :breadcrumb="breadcrumb" :is-loading="authIsLoading" main />
+	<Toolbar v-else color="primary-darken-1" :breadcrumb="[...breadcrumb, { title: item?.username ?? '', to: { name: 'artists' }}]" :is-loading="isLoading || authIsLoading" :nav="nav" main @nav="silentPush" />
 
 	<v-tabs v-model="tab" color="primary" fixed-tabs>
 		<v-tab v-for="tab, i in tabs" :="tab" :value="i" />
 	</v-tabs>
 
-	<v-window v-if="user" v-model="tab" class="bg-surface-darken-1">
-		<v-window-item value="0">
+	<v-window v-if="item" v-model="tab" class="bg-surface-darken-1">
+		<v-window-item v-if="$route.name === 'profile'" value="0">
 			<v-card :disabled="utilsStore.isLoading || !inputs">
 				<v-form ref="form" v-model="valid" @submit.prevent="handleEditProfile(inputs)">
 					<v-card-text>
@@ -123,38 +157,6 @@ onBeforeUnmount(() => store.$reset())
 									@blur="v$.email.$touch"
 								/>
 							</v-col>
-
-							<v-col cols="12" sm="6">
-								<v-text-field
-									v-model="inputs.password"
-									:error="Boolean(violations?.password)"
-									:error-messages="violations?.password || v$.password?.$errors.map((e: any) => e.$message)"
-									:counter="40"
-									label="Password*"
-									:type="showPassword ? 'text' : 'password'"
-									required
-									clearable
-									@input="v$.password.$touch"
-									@blur="v$.password.$touch"
-									:append-inner-icon="inputs.password && (showPassword ? 'fa fa-eye-slash' : 'fa fa-eye')"
-									@click:append-inner="showPassword = !showPassword"
-								/>
-							</v-col>
-
-							<v-col cols="12" sm="6">
-								<v-text-field
-									v-model="inputs.confirmPassword"
-									:error="Boolean(violations?.confirmPassword)"
-									:error-messages="violations?.confirmPassword || v$.confirmPassword?.$errors.map((e: any) => e.$message)"
-									:counter="40"
-									label="Confirm Password*"
-									type="password"
-									required
-									clearable
-									@input="v$.confirmPassword.$touch"
-									@blur="v$.confirmPassword.$touch"
-								/>
-							</v-col>
 						</v-row>
 					</v-card-text>
 
@@ -169,10 +171,10 @@ onBeforeUnmount(() => store.$reset())
 		</v-window-item>
 
 		<v-window-item value="1">
-			<v-row v-for="event, i in user.events" :key="i" class="bg-surface-darken-1" style="min-height: 11em;">
+			<v-row v-for="event, i in item.events" :key="i" class="bg-surface-darken-1" style="min-height: 11em;">
 				<v-col cols="12" sm="10" order-sm="1">
 					<v-card-title class="font-title">
-						<router-link v-if="user.id" :to="{ name: 'event', params: { id: event.id }}">
+						<router-link v-if="item.id" :to="{ name: 'event', params: { id: event.id }}">
 							{{ event.title }}
 						</router-link>
 
@@ -182,7 +184,7 @@ onBeforeUnmount(() => store.$reset())
 						</span>
 					</v-card-title>
 
-					<v-card-text class="mb-4 pb-0 text-pre-wrap clamp-fade clamp-sm" v-text="event.description" />
+					<v-card-text class="mb-4 pb-0 clamp-fade clamp-sm" v-html="DOMPurify.sanitize(marked(event.description, { mangle: false, headerIds: false }))" />
 				</v-col>
 
 				<v-col cols="12" sm="2">
@@ -191,17 +193,4 @@ onBeforeUnmount(() => store.$reset())
 			</v-row>
 		</v-window-item>
 	</v-window>
-
 </template>
-
-<style scoped>
-/* .card-container.card {
-	padding: 40px 40px;
-}
-
-.card {
-	padding: 20px 25px 30px;
-	margin: 0 auto 25px;
-	margin-top: 50px;
-} */
-</style>

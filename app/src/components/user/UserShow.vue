@@ -7,7 +7,7 @@
   />
 
   <v-container fluid>
-    <v-alert v-if="error || deleteError" type="error" class="mb-4" closable="true">
+    <v-alert v-if="error || deleteError" type="error" class="mb-4">
       {{ error || deleteError }}
     </v-alert>
 
@@ -42,10 +42,6 @@
           <td>
             {{ $t("user.password") }}
           </td>
-
-          <td>
-            {{ item.password }}
-                      </td>
         </tr>
         <tr>
           <td>
@@ -154,7 +150,7 @@
             {{ $t("user.transactions") }}
           </td>
 
-          <td>
+          <!-- <td>
             <template v-if="router.hasRoute('TransactionShow')">
               <router-link
                 v-for="transaction in item.transactions"
@@ -175,7 +171,7 @@
                 {{ transaction }}
               </p>
             </template>
-          </td>
+          </td> -->
         </tr>
         <tr>
           <td>
@@ -200,9 +196,9 @@
             {{ $t("user.deletedAt") }}
           </td>
 
-          <td>
+          <!-- <td>
             {{ formatDateTime(item.deletedAt) }}
-          </td>
+          </td> -->
         </tr>
       </tbody>
     </v-table>
@@ -219,8 +215,7 @@ import { storeToRefs } from "pinia";
 import Toolbar from "@/components/common/Toolbar.vue";
 import Loading from "@/components/common/Loading.vue";
 import { useMercureItem } from "@/composables/mercureItem";
-import { useUserDeleteStore } from "@/store/user/delete";
-import { useUserShowStore } from "@/store/user/show";
+import { useUserDeleteStore, useUserShowStore } from "@/store";
 import { formatDateTime } from "@/utils/date";
 import { useBreadcrumb } from "@/composables/breadcrumb";
 

@@ -112,7 +112,7 @@ onBeforeUnmount(() => store.$reset())
 									</span>
 								</v-card-title>
 
-								<v-card-text class="mb-4 pb-0 text-pre-wrap clamp-fade clamp-sm" v-text="event.description" />
+								<v-card-text class="mb-4 pb-0 clamp-fade clamp-sm" v-html="DOMPurify.sanitize(marked(event.description || '<i>Nothing here yet...</i>', { mangle: false, headerIds: false }))" />
 							</v-col>
 
 							<v-col cols="12" sm="2">

@@ -27,18 +27,31 @@ export const useAuthStore = defineStore('auth', {
 	}),
 	actions: {
 		async login(user: any) {
-			this.error = undefined
-			this.violations = undefined
-			this.isLoading = true
+			this.setError(undefined)
+			this.setViolations(undefined)
+			this.toggleLoading()
 
 			return axios.post(`${baseUrl}/login`, user)
 				.then(async ({ data }) => {
 					if (data.token) {
-						// fetch user profile
-						const profile = await this.profile(data)
+						try {
+							// Set the user here so that the profile request can use the token
+							this.setUser(data)
 
-						// update pinia state and keep user logged in between page refreshes
-						this.setUser({ ...data, ...profile.data })
+							const response = await api('profile')
+							const profile: User = await response.json()
+
+							// Store as little as possible but as much as necessary
+							this.setUser({ ...data, id: profile.id, '@id': profile['@id'], username: profile.username, email: profile.email, roles: profile.roles })
+						} catch (error) {
+							this.toggleLoading()
+
+							if (error instanceof Error) this.setError(error.message)
+						}
+
+						// // fetch user profile
+						// const profile = await this.profile(data)
+						// this.setUser({ ...data, ...profile.data })
 					} else throw new Error('Missing token.')
 				})
 				.catch(error => {

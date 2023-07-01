@@ -26,7 +26,7 @@ const form = ref<null | typeof import('vuetify/components')['VForm']>(null)
 const rules = {
 	username: { required, minLength: minLength(3), maxLength: maxLength(20) },
 	email: { required, email, maxLength: maxLength(50) },
-	password: { required, minLength: minLength(7), maxLength: maxLength(40) },
+	password: { required, minLength: minLength(8), maxLength: maxLength(40) },
 	// sameAs validator is broken for some reason so I'm using a custom one instead
 	confirmPassword: { required, sameAs: {
 		$validator: (value: string) => value === inputs.password,

@@ -34,17 +34,20 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
     operations: [
         new GetCollection(),
         new GetCollection(
+            name: 'profile',
+            uriTemplate: '/profile',
+            controller: ProfileController::class,
+            security: "is_granted('IS_AUTHENTICATED_FULLY')"
+        ),
+        new GetCollection(
             name: 'artists',
             uriTemplate: '/artists',
             controller: ArtistsController::class,
             security: "is_granted('PUBLIC_ACCESS')"
         ),
-        new Get(),
         new Get(
-            name: 'profile',
-            uriTemplate: '/profile',
-            controller: ProfileController::class,
-            security: "is_granted('PUBLIC_ACCESS')"
+            security: "is_granted('PUBLIC_ACCESS')",
+            normalizationContext: ['groups' => ['artist:read']]
         ),
         new Post(),
         new Put(),
@@ -80,13 +83,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->setUpdatedAt(new \DateTimeImmutable());
     }
 
-    #[Groups(['user:read', 'event:read', 'ticket:read', 'booking:read', 'transaction:read'])]
+    #[Groups(['user:read', 'artist:read', 'event:read', 'ticket:read', 'booking:read', 'transaction:read'])]
     #[ORM\Id, ORM\Column, ORM\GeneratedValue]
     private ?int $id = null;
 
     #[Assert\NotBlank]
     #[ORM\Column(type: 'string', length: 255)]
-    #[Groups(['user:read', 'user:write', 'event:read', 'ticket:read', 'booking:read', 'transaction:read'])]
+    #[Groups(['user:read', 'artist:read', 'user:write', 'event:read', 'ticket:read', 'booking:read', 'transaction:read'])]
     private ?string $username = null;
 
     #[Assert\Email, Assert\NotBlank]
@@ -102,8 +105,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     #[Groups('user:write')]
     #[Assert\Regex(
-        pattern: "/(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]).{7,}/",
-        message: "Password must be seven characters long and contain at least one digit, one upper case letter and one lower case letter"
+        pattern: "/(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]).{8,}/",
+        message: "Password must be eight characters long and contain at least one digit, one upper case letter and one lower case letter"
     )]
     private ?string $password = null;
 
@@ -143,7 +146,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     )]
     private $newRetypedPassword;
 
-    #[Groups('user:read')]
+    #[Groups(['user:read', 'artist:read'])]
     #[ORM\ManyToMany(mappedBy: 'artists', targetEntity: Event::class)]
     private Collection $events;
 

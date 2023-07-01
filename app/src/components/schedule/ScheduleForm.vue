@@ -53,14 +53,16 @@ function resetForm() {
 				</v-text-field>
 			</v-col>
 			<v-col cols="12" sm="6" md="6">
-				<v-text-field v-model="item.times" :error="Boolean(violations?.times)" :error-messages="violations?.times"
+				<FormRepeater :values="item.times" :label="$t('schedule.times')" @update="(values: any) => item.times = values" />
+
+				<!-- <v-text-field v-model="item.times" :error="Boolean(violations?.times)" :error-messages="violations?.times"
 					:label="$t('schedule.times')" required>
 					<template #append-inner>
 						<v-icon style="cursor: pointer" @click.prevent.stop="item.times = undefined">
 							mdi-close
 						</v-icon>
 					</template>
-				</v-text-field>
+				</v-text-field> -->
 			</v-col>
 			<v-col cols="12" sm="6" md="6">
 				<v-text-field v-model="item.event" :error="Boolean(violations?.event)" :error-messages="violations?.event"

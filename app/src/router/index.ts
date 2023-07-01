@@ -32,9 +32,9 @@ const routes = [
 			{ path: '', name: 'home', component: () => import('@/views/default/HomePage.vue') },
 
 			{ path: 'artists', name: 'artists', component: () => import('@/views/default/ArtistsPage.vue') },
-			{ path: 'artists/:id', name: 'artist', component: () => import('@/views/default/ProfilePage.vue'), meta: { breadcrumb: [{ title: 'Artists', to: { name: 'artists' } }] } },
+			{ path: 'artists/:id', name: 'artist', component: () => import('@/views/user/ViewShow.vue'), meta: { breadcrumb: [{ title: 'Artists', to: { name: 'artists' } }] } },
 			{ path: 'events', name: 'events', component: () => import('@/views/default/EventsPage.vue') },
-			{ path: 'events/:slug', name: 'event', component: () => import('@/views/event/ViewShow.vue'), meta: { breadcrumb: [{ title: 'Events', to: { name: 'events' } }] } },
+			{ path: 'events/:id', name: 'event', component: () => import('@/views/event/ViewShow.vue'), meta: { breadcrumb: [{ title: 'Events', to: { name: 'events' } }] } },
 			{ path: 'venues', name: 'venues', component: () => import('@/views/default/VenuesPage.vue') },
 			{ path: 'venues/:id', name: 'venue', component: () => import('@/views/venue/ViewShow.vue'), meta: { breadcrumb: [{ title: 'Venues', to: { name: 'venues' } }] } },
 			{ path: 'calendar', name: 'calendar', component: () => import('@/views/default/CalendarPage.vue'), meta: { breadcrumb: [{ title: 'Calendar', to: { name: 'calendar' } }] } },
@@ -42,7 +42,7 @@ const routes = [
 
 			{ path: 'orders', name: 'orders', component: () => import('@/views/default/BlankPage.vue'), meta: { requires: 'auth' } },
 			{ path: 'tickets', name: 'tickets', component: () => import('@/views/default/BlankPage.vue'), meta: { requires: 'auth' } },
-			{ path: 'profile', name: 'profile', component: () => import('@/views/default/ProfilePage.vue'), meta: { requires: 'auth', breadcrumb: [{ title: 'Profile', to: { name: 'profile' } }] } },
+			{ path: 'profile', name: 'profile', component: () => import('@/views/user/ViewShow.vue'), meta: { requires: 'auth', breadcrumb: [{ title: 'Profile', to: { name: 'profile' } }] } },
 
 			{ path: 'login', name: 'login', component: () => import('@/views/default/LoginPage.vue'), meta: { requires: 'guest' } },
 			{ path: 'register', name: 'register', component: () => import('@/views/default/RegisterPage.vue'), meta: { requires: 'guest' } },

@@ -1,7 +1,7 @@
 @host = https://localhost:80
 @baseUrl = {{host}}/api
 @email = "artist1@bespectacled.com"
-@password = "password"
+@password = "Password123"
 
 ### Login
 # @name login
