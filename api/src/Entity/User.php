@@ -32,35 +32,23 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
     denormalizationContext: ['groups' => ['user:write']],
     security: "is_granted('IS_AUTHENTICATED_FULLY') and object == user or is_granted('ROLE_ADMIN')",
     operations: [
+        new GetCollection(),
         new GetCollection(
-            normalizationContext: ['groups' => ['user:read']]
-        ),
-        new GetCollection(
-            uriTemplate: '/profile',
-            controller: ProfileController::class,
-            security: "is_granted('PUBLIC_ACCESS')"
-        ),
-        new GetCollection(
+            name: 'artists',
             uriTemplate: '/artists',
             controller: ArtistsController::class,
             security: "is_granted('PUBLIC_ACCESS')"
         ),
+        new Get(),
         new Get(
-            normalizationContext: [
-                'groups' => ['user:read'],
-                'access_control' => "is_granted('IS_AUTHENTICATED_FULLY') and object == user or is_granted('ROLE_ADMIN')"
-            ]
+            name: 'profile',
+            uriTemplate: '/profile',
+            controller: ProfileController::class,
+            security: "is_granted('PUBLIC_ACCESS')"
         ),
-        new Post(
-            security: "is_granted('IS_AUTHENTICATED_FULLY') and object == user or is_granted('ROLE_ADMIN')"
-        ),
-        new Put(
-            denormalizationContext: ['groups' => ['user:write']],
-            security: "is_granted('IS_AUTHENTICATED_FULLY') and object == user or is_granted('ROLE_ADMIN')"
-        ),
-        new Delete(
-            security: "is_granted('IS_AUTHENTICATED_FULLY') and object == user or is_granted('ROLE_ADMIN')"
-        ),
+        new Post(),
+        new Put(),
+        new Delete(),
         // "put-password" => [
         //     "method" => "PUT",
         //     "path" => "/users/{id}/reset-password",
@@ -124,7 +112,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[SerializedName('password')]
     private ?string $plainPassword = null;
 
-    #[Groups('user:read')]
+    #[Groups(['user:read', 'user:write'])]
     #[ORM\Column(type: 'boolean', options: ['default' => '0'])]
     private bool $enabled = false;
 

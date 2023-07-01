@@ -70,6 +70,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
 			->getSingleScalarResult();
 	}
 
+	// Difficult to replicate "LIKE" queries and search in JSON fields
 	public function findByRole(string $role): array
 	{
         return $this->createQueryBuilder('u')

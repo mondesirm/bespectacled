@@ -11,7 +11,7 @@ import Toolbar from '@/components/common/Toolbar.vue'
 import { useBreadcrumb } from '@/composables/breadcrumb'
 import { useMercureList } from '@/composables/mercureList'
 import ActionCell from '@/components/common/ActionCell.vue'
-import { useUserDeleteStore, useUserListStore, useUtilsStore } from '@/store'
+import { useUserDeleteStore, useUserListStore, useUserUpdateStore, useUtilsStore } from '@/store'
 
 const date = useDate()
 const { t } = useI18n()
@@ -25,6 +25,9 @@ const { deleted, mercureDeleted } = storeToRefs(userDeleteStore)
 
 const userListStore = useUserListStore()
 const { items, totalItems, error, isLoading } = storeToRefs(userListStore)
+
+const userUpdateStore = useUserUpdateStore()
+const { retrieved, updated, isLoading: updateIsLoading, error: updateError, violations, } = storeToRefs(userUpdateStore)
 
 const page = ref('1')
 const order = ref({})
@@ -78,6 +81,10 @@ const deleteSelected = async () => {
 		.finally(() => selection.value = [])
 }
 
+const toggleEnabled = async (enabled: boolean, item: User) => {
+	await userUpdateStore.toggleEnabled(enabled, item)
+}
+
 onBeforeUnmount(() => userDeleteStore.$reset())
 watchEffect(() => $utilsStore.setLoading(isLoading.value))
 </script>
@@ -86,7 +93,11 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 	<Toolbar :actions="selection.length > 0 ? ['add', 'delete'] : ['add']" :breadcrumb="breadcrumb" :is-loading="isLoading" @add="goToCreatePage" @delete="deleteSelected" />
 
 	<v-container fluid>
-		<v-alert v-if="error" type="error" class="mb-4" v-text="error" closable />
+		<v-alert v-if="error || updateError" type="error" class="mb-4" v-text="error || updateError" closable />
+
+		<v-alert v-if="updated" type="success" class="mb-4" closable>
+			{{ $t('itemUpdated', [updated['@type'], updated['username']]) }}
+		</v-alert>
 
 		<v-data-table-server
 			v-model="selection"
@@ -94,7 +105,7 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 			:headers="headers"
 			:items="items"
 			:items-length="totalItems"
-			:loading="isLoading"
+			:loading="isLoading || updateIsLoading"
 			:items-per-page="items.length"
 			hover
 			show-select
@@ -148,7 +159,7 @@ watchEffect(() => $utilsStore.setLoading(isLoading.value))
 			</template>
 
 			<template #item.enabled="{ item }">
-				<v-switch v-model="item.raw.enabled" color="success" />
+				<v-switch :disabled="updateIsLoading" :loading="updateIsLoading && retrieved?.['@id'] === item.raw['@id']" v-model="item.raw.enabled" color="success" @update:model-value="toggleEnabled($event as unknown as boolean, item.raw)" />
 			</template>
 		</v-data-table-server>
 	</v-container>

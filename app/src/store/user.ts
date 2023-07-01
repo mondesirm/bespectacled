@@ -325,6 +325,10 @@ export const useUserUpdateStore = defineStore('userUpdate', {
 				if (error instanceof Error) this.setError(error.message)
 			}
 		},
+		async toggleEnabled(enabled: boolean, payload: User) {
+			this.setRetrieved(payload)
+			this.update({ ...payload, enabled })
+		},
 		setRetrieved(retrieved: User) {
 			this.retrieved = retrieved
 		},

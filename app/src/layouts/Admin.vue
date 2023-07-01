@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onBeforeMount, onMounted, onUnmounted, ref, watchEffect } from 'vue'
 import { useTheme } from 'vuetify'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
@@ -27,19 +27,19 @@ const { items: venues, totalItems: totalVenues, error: venueError, isLoading: ve
 const scheduleListStore = useScheduleListStore()
 const { items: schedules, totalItems: totalSchedules, error: scheduleError, isLoading: scheduleIsLoading } = storeToRefs(scheduleListStore)
 
-const tab = ref<number | null>(null)
 const page = ref('1')
 const order = ref({})
 const search = ref('')
 const dialog = ref(false)
 const drawer = ref(false)
+const tab = ref<number | undefined>(undefined)
 const total = computed(() => ({ Users: totalUsers.value, Events: totalEvents.value, Venues: totalVenues.value, Schedules: totalSchedules.value } as const))
 
 const categories = computed(() => [
 	{ name: 'Users', icon: 'fa fa-user-tie', to: '/users', key: 'username', children: users.value as [] },
 	{ name: 'Events', icon: 'fa fa-star', to: '/events', key: 'title', children: events.value as [] },
 	{ name: 'Venues', icon: 'fa fa-location-dot', to: '/venues', key: 'name', children: venues.value as [] },
-	{ name: 'Schedules', icon: 'fa fa-calendar-days', to: '/schedule', key: 'date', children: schedules.value as [] }
+	{ name: 'Schedules', icon: 'fa fa-calendar-days', to: '/schedules', key: 'date', children: schedules.value as [] }
 ] as const)
 
 const filteredCategories = computed(() => {
@@ -83,8 +83,10 @@ const debounce = (func: () => void, delay = 500) => {
 }
 
 const registerShortcuts = (e: KeyboardEvent) => {
-	if (e.key === '/') dialog.value = true
-	if (e.ctrlKey && e.altKey && e.key === 't') toggle()
+	// @ts-ignore
+	if (e.key === '/' && /[^input|textarea|select]/i.test(e.target.tagName)) dialog.value = true
+	if (e.ctrlKey && /^k/i.test(e.key)) dialog.value = true
+	if (e.ctrlKey && e.altKey && /^[d|t]/i.test(e.key)) toggle()
 }
 
 const toggle = () => {
@@ -100,14 +102,15 @@ onBeforeMount(() => theme.global.name.value = utilsStore.dark ? 'dark' : 'light'
 onMounted(() => window.addEventListener('keydown', registerShortcuts))
 onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
 
-// watch if route starts with events, venues, or users
-watch(() => router.currentRoute.value.path, val => {
-	console.log(val)
-	if (val.startsWith('/admin/events')) tab.value = 1
-	if (val.startsWith('/admin/venues')) tab.value = 2
-	if (val.startsWith('/admin/users')) tab.value = 3
-	if (val.startsWith('/admin/schedule')) tab.value = 4
+watchEffect(() => {
+	let val = router.currentRoute.value.path
+	if (val.startsWith('/admin/users')) tab.value = 0
+	else if (val.startsWith('/admin/events')) tab.value = 1
+	else if (val.startsWith('/admin/venues')) tab.value = 2
+	else if (val.startsWith('/admin/schedules')) tab.value = 3
+	else tab.value = undefined
 })
+
 // watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 </script>
 
@@ -187,7 +190,9 @@ watch(() => router.currentRoute.value.path, val => {
 
 				<v-tabs v-else v-model="tab">
 					<v-tab v-for="{ name, icon, to }, i in categories.slice(0, -1)" :key="i" :prepend-icon="icon" color="secondary" :value="name" @click="router.push('/admin' + to)">
-						{{ name }}
+						<v-badge color="surface" :content="total[name]" location="top left" floating>
+							{{ name }}
+						</v-badge>
 					</v-tab>
 				</v-tabs>
 			</template>
@@ -226,7 +231,7 @@ watch(() => router.currentRoute.value.path, val => {
 			</v-list>
 
 			<v-list density="compact" nav>
-				<v-list-item v-for="{ name, icon, to } in categories" :key="name" :prepend-icon="icon" append-icon="fa fa-plus-circle" :title="`Create ${name.slice(0, -1)}`" @click="router.push('/admin' + to + 'create')" />
+				<v-list-item v-for="{ name, icon, to } in categories" :key="name" :prepend-icon="icon" append-icon="fa fa-plus-circle" :title="`Create ${name.slice(0, -1)}`" @click="router.push('/admin' + to + '/create')" />
 			</v-list>
 		</v-navigation-drawer>
 

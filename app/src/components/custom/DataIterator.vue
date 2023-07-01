@@ -94,7 +94,7 @@ const onIntersect = {
 			<v-alert v-if="!isLoading" type="warning" text="No results found" />
 		</template>
 
-		<template #default="props">
+		<template #="props">
 			<v-row justify="space-around">
 				<slot :="props" :onIntersect="onIntersect"></slot>
 			</v-row>

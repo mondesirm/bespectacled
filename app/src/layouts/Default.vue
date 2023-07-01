@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onBeforeMount, onMounted, onUnmounted, ref, watchEffect } from 'vue'
 import { useTheme } from 'vuetify'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
@@ -29,13 +29,13 @@ const { items: venues, totalItems: totalVenues, error: venueError, isLoading: ve
 const scheduleListStore = useScheduleListStore()
 const { items: schedules, totalItems: totalSchedules, error: scheduleError, isLoading: scheduleIsLoading } = storeToRefs(scheduleListStore)
 
-const tab = ref(null)
 const page = ref('1')
 const order = ref({})
 const scroll = ref(0)
 const search = ref('')
 const dialog = ref(false)
 const drawer = ref(false)
+const tab = ref<number | undefined>(-1)
 const scrolled = computed(() => scroll.value > 50)
 
 const icons = {
@@ -98,8 +98,10 @@ const debounce = (func: () => void, delay = 500) => {
 }
 
 const registerShortcuts = (e: KeyboardEvent) => {
-	if (e.key === '/') dialog.value = true
-	if (e.ctrlKey && e.altKey && e.key === 't') toggle()
+	// @ts-ignore
+	if (e.key === '/' && /[^input|textarea|select]/i.test(e.target.tagName)) dialog.value = true
+	if (e.ctrlKey && /^k/i.test(e.key)) dialog.value = true
+	if (e.ctrlKey && e.altKey && /^[d|t]/i.test(e.key)) toggle()
 }
 
 const toggle = () => {
@@ -119,6 +121,15 @@ onBeforeMount(() => theme.global.name.value = utilsStore.dark ? 'dark' : 'light'
 // Register shortcuts
 onMounted(() => window.addEventListener('keydown', registerShortcuts))
 onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
+
+watchEffect(() => {
+	let val = router.currentRoute.value.path
+	if (val.startsWith('/artists')) tab.value = 0
+	else if (val.startsWith('/events')) tab.value = 1
+	else if (val.startsWith('/venues')) tab.value = 2
+	else if (val.startsWith('/schedules')) tab.value = 3
+	else tab.value = undefined
+})
 
 // watch(() => search.value, val => { val && debounce(() => sendRequest()) })
 </script>
@@ -190,16 +201,16 @@ onUnmounted(() => window.removeEventListener('keydown', registerShortcuts))
 
 						<v-sheet>
 							<v-tabs v-model="tab" direction="vertical">
-								<v-tab v-for="(icon, type, i) in icons" :key="i" :prepend-icon="icon" color="primary" :value="type" @click="router.push({ name: 'events', query: { type } })">
-									{{ type.charAt(0).toUpperCase() + type.slice(1) }}
+								<v-tab v-for="{ name, icon, to }, i in categories.slice(0, -1)" :key="i" :prepend-icon="icon" color="secondary" :value="name" @click="router.push(to)">
+									{{ name }}
 								</v-tab>
 							</v-tabs>
 						</v-sheet>
 					</v-menu>
 
 					<v-tabs v-else v-model="tab">
-						<v-tab v-for="(icon, type, i) in icons" :key="i" :prepend-icon="icon" :color="scrolled ? undefined : 'primary'" :value="type" @click="router.push({ name: 'events', query: { type } })">
-							{{ type.charAt(0).toUpperCase() + type.slice(1) }}
+						<v-tab v-for="{ name, icon, to }, i in categories.slice(0, -1)" :key="i" :prepend-icon="icon" color="secondary" :value="name" @click="router.push(to)">
+							{{ name }}
 						</v-tab>
 					</v-tabs>
 				</template>

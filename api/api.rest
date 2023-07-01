@@ -78,6 +78,10 @@ Authorization: Bearer {{token}}
 GET {{baseUrl}}/events
 accept: application/ld+json
 
+### Get event with slug
+GET {{baseUrl}}/events?slug=wicked
+accept: application/ld+json
+
 #########
 
 ### Get venues
