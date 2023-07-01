@@ -50,6 +50,12 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
             normalizationContext: ['groups' => ['artist:read']]
         ),
         new Post(),
+        new Post(
+            name: 'register',
+            uriTemplate: '/register',
+            security: "is_granted('PUBLIC_ACCESS')",
+            denormalizationContext: ['groups' => ['user:register']]
+        ),
         new Put(),
         new Delete(),
         // "put-password" => [
@@ -89,12 +95,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[Assert\NotBlank]
     #[ORM\Column(type: 'string', length: 255)]
-    #[Groups(['user:read', 'artist:read', 'user:write', 'event:read', 'ticket:read', 'booking:read', 'transaction:read'])]
+    #[Groups(['user:read', 'artist:read', 'user:write', 'user:register', 'event:read', 'ticket:read', 'booking:read', 'transaction:read'])]
     private ?string $username = null;
 
     #[Assert\Email, Assert\NotBlank]
     #[ORM\Column(length: 180, unique: true)]
-    #[Groups(['user:read', 'user:write', 'event:read', 'ticket:read', 'booking:read', 'transaction:read'])]
+    #[Groups(['user:read', 'user:write', 'user:register', 'event:read', 'ticket:read', 'booking:read', 'transaction:read'])]
     private ?string $email = null;
 
     #[ORM\Column]
@@ -103,7 +109,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private array $roles = [];
 
     #[ORM\Column]
-    #[Groups('user:write')]
+    #[Groups(['user:write', 'user:register'])]
+    #[Assert\NotCompromisedPassword()]
     #[Assert\Regex(
         pattern: "/(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]).{8,}/",
         message: "Password must be eight characters long and contain at least one digit, one upper case letter and one lower case letter"
@@ -111,7 +118,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     // #[Assert\NotBlank]
-    #[Groups('user:write')]
+    #[Groups(['user:write', 'user:register'])]
     #[SerializedName('password')]
     private ?string $plainPassword = null;
 

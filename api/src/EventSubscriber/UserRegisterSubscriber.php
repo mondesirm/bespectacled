@@ -16,49 +16,42 @@ use Symfony\Component\HttpKernel\Event\GetResponseForControllerResultEvent;
 
 class UserRegisterSubscriber implements EventSubscriberInterface
 {
+	public function __construct(
+		private UserPasswordHasherInterface $userPasswordHasher,
+		private TokenGenerator $tokenGenerator,
+		private Mailer $mailer
+	) {}
 
+	/**
+	 * @return array|string[]
+	 */
+	public static function getSubscribedEvents(): array
+	{
+		return [
+			KernelEvents::VIEW => ['userRegistered', EventPriorities::PRE_WRITE],
+		];
+	}
 
-    public function __construct(
-       private UserPasswordHasherInterface $userPasswordHasher,
-       private TokenGenerator $tokenGenerator,
-       private Mailer $mailer
-    )
-    {
-    }
+	// public function userRegistered(GetResponseForControllerResultEvent $event)
+	public function userRegistered(ViewEvent $event): void
+	{
 
-    /**
-     * @return array|string[]
-     */
-    public static function getSubscribedEvents()
-    {
-        return [
-            KernelEvents::VIEW => ['userRegistered', EventPriorities::PRE_WRITE],
-        ];
-    }
+		$user = $event->getControllerResult();
+		$method = $event->getRequest()->getMethod();
 
-   // public function userRegistered(GetResponseForControllerResultEvent $event)
-    public function userRegistered(ViewEvent $event)
-    {
+		if (!$user instanceof User || !in_array($method, [Request::METHOD_POST, Request::METHOD_PUT])) return;
 
-        $user = $event->getControllerResult();
-        $method = $event->getRequest()->getMethod();
+		// It is an User, we need to hash password here
+		$user->setPassword(
+			$this->userPasswordHasher->hashPassword($user, $user->getPlainPassword())
+		);
 
-        if (!$user instanceof User ||
-            !in_array($method, [Request::METHOD_POST])) {
-            return;
-        }
+		// Create confirmation token
+		$user->setConfirmationToken(
+			$this->tokenGenerator->getRandomSecureToken()
+		);
 
-        // It is an User, we need to hash password here
-        /*$user->setPassword(
-            $this->userPasswordHasher->hashPassword($user, $user->getPassword())
-        );
-
-        // Create confirmation token
-        $user->setConfirmationToken(
-            $this->tokenGenerator->getRandomSecureToken()
-        );
-
-        // Send e-mail here...
-        $this->mailer->sendConfirmationEmail($user);*/
-    }
+		// Send e-mail here...
+		$this->mailer->sendConfirmationEmail($user);
+	}
 }

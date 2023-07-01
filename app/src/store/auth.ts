@@ -79,7 +79,7 @@ export const useAuthStore = defineStore('auth', {
 			this.toggleLoading()
 
 			try {
-				const response = await api('users', {
+				const response = await api('register', {
 					method: 'POST',
 					body: JSON.stringify(payload)
 				})
