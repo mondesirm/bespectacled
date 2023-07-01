@@ -10,9 +10,7 @@ import Loading from '@/components/common/Loading.vue'
 import Toolbar from '@/components/common/Toolbar.vue'
 import { useBreadcrumb } from '@/composables/breadcrumb'
 import { useMercureItem } from '@/composables/mercureItem'
-import { useVenueCreateStore } from '@/store/venue/create'
-import { useVenueDeleteStore } from '@/store/venue/delete'
-import { useVenueUpdateStore } from '@/store/venue/update'
+import { useVenueCreateStore, useVenueDeleteStore, useVenueUpdateStore } from '@/store'
 
 const { t } = useI18n()
 const route = useRoute()

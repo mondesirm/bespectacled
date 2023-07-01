@@ -70,7 +70,7 @@ function resetForm() {
 			</v-col>
 			<v-col cols="12" sm="6" md="6">
 				<v-text-field v-model="item.password" :error="Boolean(violations?.password)"
-					:error-messages="violations?.password" :label="$t('user.password')">
+					:error-messages="violations?.password" type="password" :label="$t('user.password')">
 					<template #append-inner>
 						<v-icon style="cursor: pointer" @click.prevent.stop="item.password = undefined">
 							mdi-close
@@ -79,14 +79,15 @@ function resetForm() {
 				</v-text-field>
 			</v-col>
 			<v-col cols="12" sm="6" md="6">
-				<v-text-field v-model="item.roles" :error="Boolean(violations?.roles)" :error-messages="violations?.roles"
+				<FormRepeater :values="item.roles" :label="$t('user.roles')" @update="(values: any) => item.roles = values" />
+				<!-- <v-text-field v-model="item.roles" :error="Boolean(violations?.roles)" :error-messages="violations?.roles"
 					:label="$t('user.roles')">
 					<template #append-inner>
 						<v-icon style="cursor: pointer" @click.prevent.stop="item.roles = undefined">
 							mdi-close
 						</v-icon>
 					</template>
-				</v-text-field>
+				</v-text-field> -->
 			</v-col>
 			<v-col cols="12" sm="6" md="6">
 				<v-text-field v-model="item.enabled" :error="Boolean(violations?.enabled)"
@@ -99,50 +100,7 @@ function resetForm() {
 				</v-text-field>
 			</v-col>
 			<v-col cols="12">
-				<FormRepeater :values="item.events" :label="$t('user.events')"
-					@update="(values: any) => (item.events = values)" />
-			</v-col>
-			<v-col cols="12">
-				<FormRepeater :values="item.tickets" :label="$t('user.tickets')"
-					@update="(values: any) => (item.tickets = values)" />
-			</v-col>
-			<v-col cols="12">
-				<FormRepeater :values="item.bookings" :label="$t('user.bookings')"
-					@update="(values: any) => (item.bookings = values)" />
-			</v-col>
-			<v-col cols="12">
-				<FormRepeater :values="item.transactions" :label="$t('user.transactions')"
-					@update="(values: any) => (item.transactions = values)" />
-			</v-col>
-			<v-col cols="12" sm="6" md="6">
-				<v-text-field v-model="item.createdAt" :error="Boolean(violations?.createdAt)"
-					:error-messages="violations?.createdAt" :label="$t('user.createdAt')" type="date">
-					<template #append-inner>
-						<v-icon style="cursor: pointer" @click.prevent.stop="item.createdAt = undefined">
-							mdi-close
-						</v-icon>
-					</template>
-				</v-text-field>
-			</v-col>
-			<v-col cols="12" sm="6" md="6">
-				<v-text-field v-model="item.updatedAt" :error="Boolean(violations?.updatedAt)"
-					:error-messages="violations?.updatedAt" :label="$t('user.updatedAt')" type="date">
-					<template #append-inner>
-						<v-icon style="cursor: pointer" @click.prevent.stop="item.updatedAt = undefined">
-							mdi-close
-						</v-icon>
-					</template>
-				</v-text-field>
-			</v-col>
-			<v-col cols="12" sm="6" md="6">
-				<v-text-field v-model="item.deletedAt" :error="Boolean(violations?.deletedAt)"
-					:error-messages="violations?.deletedAt" :label="$t('user.deletedAt')" type="date">
-					<template #append-inner>
-						<v-icon style="cursor: pointer" @click.prevent.stop="item.deletedAt = undefined">
-							mdi-close
-						</v-icon>
-					</template>
-				</v-text-field>
+				<FormRepeater :values="item.events" :label="$t('user.events')" @update="(values: any) => (item.events = values)" />
 			</v-col>
 		</v-row>
 
