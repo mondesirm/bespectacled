@@ -12,7 +12,7 @@ The installation can be done using Docker Compose. You just have to execute the 
 docker compose up -d --build
 ```
 
-To install the project, please run the following command. 
+To install the project, please run the following command.
 
 ```bash
 docker compose exec -it php bash /var/www/api/installation.sh
@@ -44,4 +44,4 @@ The API is available at the following address : `http://localhost/api`
 The front application is available at the following address : `http://localhost:8080`
 
 ### Debug
-* Get token: `curl -X POST -H "Content-Type: application/json" http://localhost:80/api/login -d '{"email":"root1@root.com","password":"test"}'`
+* Get token: `curl -X POST -H "Content-Type: application/json" http://localhost:80/api/login -d '{"email":"user1@root.com","password":"Password123"}'`
